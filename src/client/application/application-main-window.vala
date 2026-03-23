@@ -2437,7 +2437,11 @@ public class Application.MainWindow :
 
     private ContactConversationListModel? contact_email_model;
 
-    private void on_contact_selected(Geary.Contact? contact) {
+    private async void on_contact_selected(Geary.Contact? contact) {
+        if (this.selected_account == null) {
+            return;
+        }
+        
         if (contact != null) {
             debug("Contact selected: %s", contact.email);
             
@@ -2445,8 +2449,13 @@ public class Application.MainWindow :
                 this.contact_email_model = new ContactConversationListModel();
             }
             
-            if (this.selected_account != null) {
-                this.contact_email_model.set_filter_contact(contact);
+            this.contact_email_model.set_filter_contact(contact);
+            
+            try {
+                yield this.contact_email_model.load_from_account(this.selected_account);
+                debug("Loaded %d emails for contact", this.contact_email_model.size);
+            } catch (GLib.Error error) {
+                debug("Error loading emails for contact: %s", error.message);
             }
         }
     }

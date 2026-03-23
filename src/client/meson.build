@@ -155,6 +155,7 @@ client_vala_sources = files(
   'contact-list/contact-list-entry.vala',
   'contact-list/contact-list-model.vala',
   'contact-list/contact-list-tree.vala',
+  'contact-list/contact-email-list-view.vala',
 )
 
 client_dependencies = [
