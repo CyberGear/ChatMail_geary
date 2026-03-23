@@ -30,6 +30,7 @@ public class Application.MainWindow :
     public const string ACTION_TOGGLE_JUNK = "toggle-conversation-junk";
     public const string ACTION_TRASH_CONVERSATION = "trash-conversation";
     public const string ACTION_ZOOM = "zoom";
+    public const string ACTION_TOGGLE_VIEW_MODE = "toggle-view-mode";
     public const string ACTION_NAVIGATION_BACK = "navigation-back";
 
     private const ActionEntry[] EDIT_ACTIONS = {
@@ -46,6 +47,7 @@ public class Application.MainWindow :
         { ACTION_SEARCH, on_search_activated },
         { ACTION_SELECT_INBOX, on_select_inbox, "i" },
         { ACTION_NAVIGATION_BACK, go_to_previous_pane},
+        { ACTION_TOGGLE_VIEW_MODE, on_toggle_view_mode },
 
         // Message actions
         { ACTION_REPLY_CONVERSATION, on_reply_conversation },
@@ -263,6 +265,11 @@ public class Application.MainWindow :
         owner.add_window_accelerators(
             ACTION_ZOOM+("('normal')"), { "<Ctrl>0" }
         );
+
+        // View mode toggle
+        owner.add_window_accelerators(
+            ACTION_TOGGLE_VIEW_MODE, { "<Ctrl><Shift>V" }
+        );
     }
 
 
@@ -360,9 +367,13 @@ public class Application.MainWindow :
 
     // Widget descendants
     public FolderList.Tree folder_list { get; private set; default = new FolderList.Tree(); }
+    public ContactList.Tree contact_list { get; private set; }
     public SearchBar search_bar { get; private set; }
     public ConversationList.View conversation_list_view  { get; private set; }
     public ConversationViewer conversation_viewer { get; private set; }
+
+    // View mode state
+    private bool use_contact_view = false;
 
     public Components.InfoBarStack conversation_list_info_bars {
         get; private set; default = new Components.InfoBarStack(PRIORITY_QUEUE);
@@ -2381,6 +2392,46 @@ public class Application.MainWindow :
             } catch (GLib.Error error) {
                 debug("Error getting accounts");
             }
+        }
+    }
+
+    private void on_toggle_view_mode(SimpleAction action, Variant? parameter) {
+        this.use_contact_view = !this.use_contact_view;
+        
+        if (this.use_contact_view) {
+            show_contact_view();
+        } else {
+            show_folder_view();
+        }
+    }
+
+    private async void show_contact_view() {
+        if (this.selected_account == null) {
+            return;
+        }
+        
+        if (this.contact_list == null) {
+            this.contact_list = new ContactList.Tree();
+            this.contact_list.contact_selected.connect(on_contact_selected);
+        }
+        
+        var inbox = this.selected_account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
+        if (inbox != null) {
+            try {
+                yield this.contact_list.load_from_folder(inbox);
+            } catch (GLib.Error error) {
+                debug("Error loading contact list: %s", error.message);
+            }
+        }
+    }
+
+    private void show_folder_view() {
+        // Restore folder list view
+    }
+
+    private void on_contact_selected(Geary.Contact? contact) {
+        if (contact != null) {
+            debug("Contact selected: %s", contact.email);
         }
     }
 

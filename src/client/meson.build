@@ -92,6 +92,7 @@ client_vala_sources = files(
   'conversation-list/conversation-list-participant.vala',
   'conversation-list/conversation-list-row.vala',
   'conversation-list/conversation-list-view.vala',
+  'conversation-list/contact-conversation-list-model.vala',
 
   'conversation-viewer/conversation-contact-popover.vala',
   'conversation-viewer/conversation-email.vala',

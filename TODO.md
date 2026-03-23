@@ -68,16 +68,16 @@ public Gee.Map<Contact, int> get_contact_counts()
 **Directory:** Modify existing `src/client/conversation-list/`
 
 **Changes needed:**
-- Create `ContactConversationListModel` that aggregates from multiple folders
-- Support filtering by contact
-- Add visual distinction for incoming (left) vs outgoing (right)
+- [x] Create `ContactConversationListModel` that aggregates from multiple folders
+- [x] Support filtering by contact
+- [ ] Add visual distinction for incoming (left) vs outgoing (right)
 
 **New file:** `contact-conversation-list-model.vala`
 ```vala
 public class ContactConversationListModel : GLib.Object
   - Gee.ListModel implementation
   - Load from multiple folders (Inbox + Sent)
-  - Filter by selected contact
+  - Filter by contact
   - Sort by date (newest first)
 ```
 
@@ -85,9 +85,9 @@ public class ContactConversationListModel : GLib.Object
 **File:** `src/client/application/application-main-window.vala`
 
 **Changes:**
-1. Add toggle between views (menu item + keyboard shortcut)
-2. Store two sets of widgets: folder-based and contact-based
-3. Implement view switching logic
+1. [x] Add toggle between views (menu item + keyboard shortcut)
+2. [x] Store two sets of widgets: folder-based and contact-based
+3. [x] Implement view switching logic (basic)
 
 **New properties:**
 ```vala
