@@ -141,6 +141,7 @@ client_vala_sources = files(
 
   'util/util-cache.vala',
   'util/util-contact.vala',
+  'util/contact-extractor.vala',
   'util/util-date.vala',
   'util/util-email.vala',
   'util/util-files.vala',
@@ -149,6 +150,10 @@ client_vala_sources = files(
   'util/util-i18n.vala',
   'util/util-js.vala',
   'util/util-migrate.vala',
+
+  'contact-list/contact-list-entry.vala',
+  'contact-list/contact-list-model.vala',
+  'contact-list/contact-list-tree.vala',
 )
 
 client_dependencies = [
