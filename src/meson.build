@@ -159,10 +159,11 @@ endif
 valadoc_dep_args = []
 foreach dep : valadoc_dependencies
   valadoc_dep_args += '--pkg'
-  if dep != libhandy
-    valadoc_dep_args += dep.name()
-  else
+  dep_name = dep.name()
+  if dep_name == libhandy.name()
     valadoc_dep_args += 'libhandy-1'
+  else
+    valadoc_dep_args += dep_name
   endif
 endforeach
 valadoc_dep_args += [ '--pkg', 'config' ]
