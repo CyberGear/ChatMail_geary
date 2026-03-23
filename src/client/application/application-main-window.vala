@@ -368,6 +368,7 @@ public class Application.MainWindow :
     // Widget descendants
     public FolderList.Tree folder_list { get; private set; default = new FolderList.Tree(); }
     public ContactList.Tree contact_list { get; private set; }
+    public ContactEmailListView contact_email_list_view { get; private set; }
     public SearchBar search_bar { get; private set; }
     public ConversationList.View conversation_list_view  { get; private set; }
     public ConversationViewer conversation_viewer { get; private set; }
@@ -413,6 +414,7 @@ public class Application.MainWindow :
 
     [GtkChild] private unowned Gtk.ScrolledWindow folder_list_scrolled;
     [GtkChild] private unowned Gtk.ScrolledWindow contact_list_scrolled;
+    [GtkChild] private unowned Gtk.ScrolledWindow contact_email_scrolled;
 
     [GtkChild] private unowned Gtk.Box conversation_list_box;
     [GtkChild] private unowned Gtk.Revealer conversation_list_actions_revealer;
@@ -2408,37 +2410,68 @@ public class Application.MainWindow :
 
     private async void show_contact_view() {
         if (this.selected_account == null) {
+            debug("No account selected, cannot show contact view");
             return;
         }
+        
+        debug("Showing contact view for account: %s", this.selected_account.information.display_name);
         
         if (this.contact_list == null) {
             this.contact_list = new ContactList.Tree();
             this.contact_list.contact_selected.connect(on_contact_selected);
             this.contact_list_scrolled.add(this.contact_list);
+            debug("Created new contact list");
+        }
+        
+        if (this.contact_email_list_view == null) {
+            this.contact_email_list_view = new ContactEmailListView();
+            this.contact_email_list_view.email_activated.connect(on_contact_email_activated);
+            this.contact_email_scrolled.add(this.contact_email_list_view);
+            debug("Created new contact email list view and added to scrolled");
         }
         
         this.folder_list_scrolled.visible = false;
         this.contact_list_scrolled.visible = true;
+        this.contact_email_scrolled.visible = true;
+        this.conversation_list_box.visible = false;
+        this.conversation_viewer_box.visible = false;
         
         var inbox = this.selected_account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
         if (inbox != null) {
+            debug("Loading contacts from inbox");
             try {
                 yield this.contact_list.load_from_folder(inbox);
+                debug("Contact list loaded");
             } catch (GLib.Error error) {
                 debug("Error loading contact list: %s", error.message);
             }
+        } else {
+            debug("No inbox folder found");
         }
     }
 
     private void show_folder_view() {
         this.folder_list_scrolled.visible = true;
         this.contact_list_scrolled.visible = false;
+        this.conversation_list_box.visible = true;
+        this.conversation_viewer_box.visible = true;
+        if (this.contact_email_scrolled != null) {
+            this.contact_email_scrolled.visible = false;
+        }
+    }
+
+    private void on_contact_email_activated(Geary.Email email, uint button) {
+        debug("Email activated from contact view: %s", 
+            email.subject != null ? email.subject.value : "(no subject)");
     }
 
     private ContactConversationListModel? contact_email_model;
 
     private async void on_contact_selected(Geary.Contact? contact) {
+        debug("on_contact_selected called: %s", contact != null ? contact.email : "null");
+        
         if (this.selected_account == null) {
+            debug("No selected account");
             return;
         }
         
@@ -2452,8 +2485,16 @@ public class Application.MainWindow :
             this.contact_email_model.set_filter_contact(contact);
             
             try {
+                debug("Loading emails for contact from account");
                 yield this.contact_email_model.load_from_account(this.selected_account);
                 debug("Loaded %d emails for contact", this.contact_email_model.size);
+                
+                if (this.contact_email_list_view != null) {
+                    this.contact_email_list_view.set_model(this.contact_email_model);
+                    debug("Set model on contact email list view");
+                } else {
+                    debug("contact_email_list_view is null!");
+                }
             } catch (GLib.Error error) {
                 debug("Error loading emails for contact: %s", error.message);
             }

@@ -27,6 +27,7 @@ public class ContactListModel : GLib.Object {
                                        Geary.Email.Field required_fields,
                                        GLib.Cancellable? cancellable = null)
         throws GLib.Error {
+        debug("Loading contacts from folder: %s", folder.path.to_string());
         clear();
 
         int count = 100;
@@ -38,14 +39,17 @@ public class ContactListModel : GLib.Object {
             cancellable
         );
 
+        debug("Got %d emails from folder", emails != null ? emails.size : 0);
+
         if (emails == null || emails.size == 0) {
             return;
         }
 
-        var account = folder.account;
         foreach (var email in emails) {
             add_email_contacts(email);
         }
+
+        debug("Added contacts, total: %d", _contacts.size);
     }
 
     public void add_email_contacts(Geary.Email email) {

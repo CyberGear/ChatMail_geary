@@ -26,9 +26,11 @@ public class ContactConversationListModel : GLib.Object {
                                          GLib.Cancellable? cancellable = null)
         throws GLib.Error {
         if (_loading) {
+            debug("Already loading, skipping");
             return;
         }
 
+        debug("Loading emails from account: %s", account.information.display_name);
         _loading = true;
         _account = account;
         _cancellable = cancellable;
@@ -37,12 +39,15 @@ public class ContactConversationListModel : GLib.Object {
         var inbox = account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
         var sent = account.get_special_folder(Geary.Folder.SpecialUse.SENT);
 
+        debug("Inbox: %s, Sent: %s", inbox != null ? "yes" : "no", sent != null ? "yes" : "no");
+
         yield load_folder_emails(inbox, cancellable);
         yield load_folder_emails(sent, cancellable);
 
         sort_emails();
         
         _loading = false;
+        debug("Loaded %d total emails", _emails.length);
         emails_loaded();
     }
 
@@ -50,11 +55,6 @@ public class ContactConversationListModel : GLib.Object {
                                           GLib.Cancellable? cancellable)
         throws GLib.Error {
         if (folder == null) {
-            return;
-        }
-
-        bool opened = yield folder.open_async(Geary.Folder.OpenFlags.NONE, cancellable);
-        if (!opened) {
             return;
         }
 
@@ -75,10 +75,9 @@ public class ContactConversationListModel : GLib.Object {
         if (emails != null) {
             foreach (var email in emails) {
                 _emails.add(email);
+                _email_folders.set(email, folder.path);
             }
         }
-
-        yield folder.close_async(cancellable);
     }
 
     private void sort_emails() {
@@ -144,15 +143,26 @@ public class ContactConversationListModel : GLib.Object {
         return false;
     }
 
+    private Gee.HashMap<Geary.Email, Geary.FolderPath> _email_folders =
+        new Gee.HashMap<Geary.Email, Geary.FolderPath>();
+
     public bool is_outgoing(Geary.Email email) {
         if (_account == null) {
+            return false;
+        }
+
+        var folder_path = _email_folders.get(email);
+        if (folder_path == null) {
             return false;
         }
 
         var sent_folder = _account.get_special_folder(Geary.Folder.SpecialUse.SENT);
         var outbox_folder = _account.get_special_folder(Geary.Folder.SpecialUse.OUTBOX);
 
-        if (sent_folder != null || outbox_folder != null) {
+        if (sent_folder != null && folder_path.equal_to(sent_folder.path)) {
+            return true;
+        }
+        if (outbox_folder != null && folder_path.equal_to(outbox_folder.path)) {
             return true;
         }
 
@@ -176,6 +186,7 @@ public class ContactConversationListModel : GLib.Object {
 
     public void clear() {
         _emails = new GLib.GenericArray<Geary.Email>();
+        _email_folders.clear();
         _selected_contact = null;
         _account = null;
     }

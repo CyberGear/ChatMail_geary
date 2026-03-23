@@ -18,9 +18,14 @@ public class ContactEmailListView : Gtk.ScrolledWindow {
         this.list_box.selection_mode = Gtk.SelectionMode.SINGLE;
         this.list_box.row_selected.connect(on_row_selected);
         this.list_box.row_activated.connect(on_row_activated);
+        
+        this.list_box.visible = true;
+        this.list_box.no_show_all = false;
 
         add(this.list_box);
         set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+        this.visible = true;
+        this.no_show_all = false;
     }
 
     public void set_model(ContactConversationListModel model) {
@@ -29,15 +34,24 @@ public class ContactEmailListView : Gtk.ScrolledWindow {
     }
 
     private void rebuild_list() {
+        debug("ContactEmailListView: rebuild_list called, model=%s", model != null ? "yes" : "no");
+        
         foreach (var child in list_box.get_children()) {
             child.destroy();
         }
 
         if (model == null) {
+            debug("ContactEmailListView: model is null, showing placeholder");
+            var placeholder = new Gtk.Label("Select a contact to see emails");
+            list_box.add(placeholder);
+            placeholder.show();
             return;
         }
 
-        for (uint i = 0; i < model.get_n_items(); i++) {
+        uint count = model.get_n_items();
+        debug("ContactEmailListView: rebuilding with %u emails", count);
+        
+        for (uint i = 0; i < count; i++) {
             var email = model.get_item(i);
             if (email == null) {
                 continue;
@@ -46,6 +60,8 @@ public class ContactEmailListView : Gtk.ScrolledWindow {
             var row = create_row_for_email(email, model.is_outgoing(email));
             list_box.add(row);
         }
+        
+        list_box.show_all();
     }
 
     private Gtk.Widget create_row_for_email(Geary.Email email, bool is_outgoing) {

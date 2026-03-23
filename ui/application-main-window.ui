@@ -58,11 +58,12 @@
                              <property name="position">1</property>
                            </packing>
                         </child>
-                        <child>
+                         <child>
                            <object class="GtkScrolledWindow" id="contact_list_scrolled">
                               <property name="visible">False</property>
                               <property name="vexpand">True</property>
                               <property name="hscrollbar_policy">never</property>
+                              <property name="width_request">200</property>
                               <style>
                                 <class name="geary-contact"/>
                               </style>
@@ -126,6 +127,17 @@
                       </object>
                       <packing>
                         <property name="name">conversation_list</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="contact_email_scrolled">
+                        <property name="visible">False</property>
+                        <property name="vexpand">True</property>
+                        <property name="hscrollbar_policy">never</property>
+                        <property name="width_request">300</property>
+                      </object>
+                      <packing>
+                        <property name="name">contact_email_list</property>
                       </packing>
                     </child>
                   </object>

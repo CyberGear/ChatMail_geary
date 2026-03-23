@@ -105,6 +105,8 @@ public class ContactList.Tree : Gtk.TreeView, Geary.BaseInterface {
     private void rebuild_tree() {
         store.clear();
 
+        debug("Rebuilding contact tree with %d contacts", _model.size);
+        
         foreach (var contact in _model.get_sorted()) {
             Gtk.TreeIter iter;
             store.append(out iter);
@@ -118,7 +120,9 @@ public class ContactList.Tree : Gtk.TreeView, Geary.BaseInterface {
                 1, contact.email,
                 2, contact.email
             );
+            debug("Added contact to tree: %s", display_name);
         }
+        debug("Contact tree rebuild complete");
     }
 
     public void clear() {
