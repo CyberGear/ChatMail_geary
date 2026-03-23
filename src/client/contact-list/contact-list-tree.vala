@@ -102,6 +102,23 @@ public class ContactList.Tree : Gtk.TreeView, Geary.BaseInterface {
         rebuild_tree();
     }
 
+    public async void load_from_account(Geary.Account account,
+                                        GLib.Cancellable? cancellable = null)
+        throws GLib.Error {
+        debug("ContactList.Tree.load_from_account: starting");
+        var account_emails = new Gee.ArrayList<string>();
+        foreach (var mailbox in account.information.sender_mailboxes) {
+            account_emails.add(mailbox.address);
+            debug("ContactList.Tree: account email: %s", mailbox.address);
+        }
+        _model.set_account_emails(account_emails);
+
+        yield _model.load_from_account(account, cancellable);
+        _current_folder = account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
+        debug("ContactList.Tree: model has %d contacts, rebuilding tree", _model.size);
+        rebuild_tree();
+    }
+
     private void rebuild_tree() {
         store.clear();
 

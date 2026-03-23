@@ -49,11 +49,15 @@ public class ContactEmailListView : Gtk.ScrolledWindow {
         }
 
         uint count = model.get_n_items();
-        debug("ContactEmailListView: rebuilding with %u emails", count);
+        debug("ContactEmailListView: rebuilding with %u total emails", count);
         
         for (uint i = 0; i < count; i++) {
             var email = model.get_item(i);
             if (email == null) {
+                continue;
+            }
+
+            if (!model.matches_filter(email)) {
                 continue;
             }
 

@@ -14,12 +14,41 @@ public class ContactConversationListModel : GLib.Object {
     private Geary.Account? _account = null;
     private GLib.Cancellable? _cancellable = null;
     private bool _loading = false;
+    private Gee.HashSet<string> _account_emails = new Gee.HashSet<string>();
 
     public int size {
         get { return (int) _emails.length; }
     }
 
     public ContactConversationListModel() {
+    }
+
+    public void set_account_emails(Gee.Collection<string> emails) {
+        _account_emails.clear();
+        foreach (var email in emails) {
+            string normalized = normalise_gmail_address(email);
+            _account_emails.add(normalized);
+        }
+    }
+
+    private static string normalise_gmail_address(string address) {
+        string normalized = address.normalize().casefold();
+        int at_pos = normalized.last_index_of("@");
+        if (at_pos > 0) {
+            string domain = normalized.substring(at_pos + 1);
+            if (domain == "gmail.com" || domain == "googlemail.com") {
+                int plus_pos = normalized.last_index_of("+");
+                if (plus_pos > 0 && plus_pos > at_pos - 10) {
+                    normalized = normalized.substring(0, plus_pos) + "@" + domain;
+                }
+            }
+        }
+        return normalized;
+    }
+
+    private bool is_account_email(string address) {
+        string normalized = normalise_gmail_address(address);
+        return _account_emails.contains(normalized);
     }
 
     public async void load_from_account(Geary.Account account,
@@ -118,7 +147,7 @@ public class ContactConversationListModel : GLib.Object {
 
         if (email.from != null) {
             foreach (var addr in email.from.get_all()) {
-                if (Geary.Contact.normalise_email(addr.address) == normalized) {
+                if (normalise_gmail_address(addr.address) == normalized) {
                     return true;
                 }
             }
@@ -126,7 +155,7 @@ public class ContactConversationListModel : GLib.Object {
 
         if (email.to != null) {
             foreach (var addr in email.to.get_all()) {
-                if (Geary.Contact.normalise_email(addr.address) == normalized) {
+                if (normalise_gmail_address(addr.address) == normalized) {
                     return true;
                 }
             }
@@ -134,7 +163,7 @@ public class ContactConversationListModel : GLib.Object {
 
         if (email.cc != null) {
             foreach (var addr in email.cc.get_all()) {
-                if (Geary.Contact.normalise_email(addr.address) == normalized) {
+                if (normalise_gmail_address(addr.address) == normalized) {
                     return true;
                 }
             }

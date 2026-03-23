@@ -2402,7 +2402,7 @@ public class Application.MainWindow :
         this.use_contact_view = !this.use_contact_view;
         
         if (this.use_contact_view) {
-            show_contact_view();
+            show_contact_view.begin();
         } else {
             show_folder_view();
         }
@@ -2417,10 +2417,13 @@ public class Application.MainWindow :
         debug("Showing contact view for account: %s", this.selected_account.information.display_name);
         
         if (this.contact_list == null) {
+            debug("Creating new ContactList.Tree");
             this.contact_list = new ContactList.Tree();
             this.contact_list.contact_selected.connect(on_contact_selected);
             this.contact_list_scrolled.add(this.contact_list);
             debug("Created new contact list");
+        } else {
+            debug("Reusing existing contact list");
         }
         
         if (this.contact_email_list_view == null) {
@@ -2436,17 +2439,18 @@ public class Application.MainWindow :
         this.conversation_list_box.visible = false;
         this.conversation_viewer_box.visible = false;
         
-        var inbox = this.selected_account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
-        if (inbox != null) {
-            debug("Loading contacts from inbox");
-            try {
-                yield this.contact_list.load_from_folder(inbox);
-                debug("Contact list loaded");
-            } catch (GLib.Error error) {
-                debug("Error loading contact list: %s", error.message);
+        debug("Loading contacts from selected folder");
+        try {
+            if (this.selected_folder != null) {
+                debug("Using selected_folder: %s", this.selected_folder.path.to_string());
+                yield this.contact_list.load_from_folder(this.selected_folder);
+            } else {
+                debug("No selected_folder, trying get_special_folder");
+                yield this.contact_list.load_from_account(this.selected_account);
             }
-        } else {
-            debug("No inbox folder found");
+            debug("Contact list loaded, size: %d", this.contact_list.get_contact_model().size);
+        } catch (GLib.Error error) {
+            debug("Error loading contact list: %s", error.message);
         }
     }
 
@@ -2482,9 +2486,15 @@ public class Application.MainWindow :
                 this.contact_email_model = new ContactConversationListModel();
             }
             
-            this.contact_email_model.set_filter_contact(contact);
+            var account_emails = new Gee.ArrayList<string>();
+            foreach (var mailbox in this.selected_account.information.sender_mailboxes) {
+                account_emails.add(mailbox.address);
+            }
             
-            try {
+            this.contact_email_model.set_filter_contact(contact);
+            this.contact_email_model.set_account_emails(account_emails);
+                
+                try {
                 debug("Loading emails for contact from account");
                 yield this.contact_email_model.load_from_account(this.selected_account);
                 debug("Loaded %d emails for contact", this.contact_email_model.size);

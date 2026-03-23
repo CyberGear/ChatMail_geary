@@ -15,6 +15,8 @@ public class ContactListModel : GLib.Object {
     private Gee.HashMap<string, int> _outgoing_counts =
         new Gee.HashMap<string, int>();
 
+    private Gee.HashSet<string> _account_emails = new Gee.HashSet<string>();
+
     public int size {
         get { return _contacts.size; }
     }
@@ -23,11 +25,45 @@ public class ContactListModel : GLib.Object {
         get { return _contacts.size == 0; }
     }
 
+    public void set_account_emails(Gee.Collection<string> emails) {
+        _account_emails.clear();
+        foreach (var email in emails) {
+            string normalized = normalise_gmail_address(email);
+            _account_emails.add(normalized);
+        }
+    }
+
+    private static string normalise_gmail_address(string address) {
+        string normalized = address.normalize().casefold();
+        int at_pos = normalized.last_index_of("@");
+        if (at_pos > 0) {
+            string domain = normalized.substring(at_pos + 1);
+            if (domain == "gmail.com" || domain == "googlemail.com") {
+                int plus_pos = normalized.last_index_of("+");
+                if (plus_pos > 0 && plus_pos > at_pos - 10) {
+                    normalized = normalized.substring(0, plus_pos) + "@" + domain;
+                }
+            }
+        }
+        return normalized;
+    }
+
+    private bool is_account_email(string address) {
+        string normalized = normalise_gmail_address(address);
+        return _account_emails.contains(normalized);
+    }
+
     public async void load_from_folder(Geary.Folder folder,
                                        Geary.Email.Field required_fields,
                                        GLib.Cancellable? cancellable = null)
         throws GLib.Error {
         debug("Loading contacts from folder: %s", folder.path.to_string());
+        
+        var c = cancellable;
+        if (c == null) {
+            c = new GLib.Cancellable();
+        }
+        
         clear();
 
         int count = 100;
@@ -36,7 +72,7 @@ public class ContactListModel : GLib.Object {
             count,
             required_fields,
             Geary.Folder.ListFlags.OLDEST_TO_NEWEST,
-            cancellable
+            c
         );
 
         debug("Got %d emails from folder", emails != null ? emails.size : 0);
@@ -86,10 +122,17 @@ public class ContactListModel : GLib.Object {
                              int importance,
                              bool is_outgoing) {
         if (addr.address == null || addr.address == "") {
+            debug("add_contact: empty address, skipping");
             return;
         }
 
-        var normalized = Geary.Contact.normalise_email(addr.address);
+        if (is_account_email(addr.address)) {
+            debug("add_contact: %s is account email, skipping", addr.address);
+            return;
+        }
+
+        var normalized = normalise_gmail_address(addr.address);
+        debug("add_contact: normalized=%s, name=%s", normalized, addr.name);
         var existing = _contacts.get(normalized);
 
         if (existing != null) {
@@ -127,6 +170,69 @@ public class ContactListModel : GLib.Object {
         _contacts.clear();
         _incoming_counts.clear();
         _outgoing_counts.clear();
+    }
+
+    public async void load_from_account(Geary.Account account,
+                                         GLib.Cancellable? cancellable = null)
+        throws GLib.Error {
+        debug("load_from_account: starting for account %s", account.information.display_name);
+        
+        var c = cancellable;
+        if (c == null) {
+            c = new GLib.Cancellable();
+        }
+        
+        clear();
+
+        var required_fields = Geary.Email.Field.ORIGINATORS | Geary.Email.Field.RECEIVERS;
+
+        var inbox = account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
+        debug("load_from_account: inbox=%p", inbox);
+        if (inbox != null) {
+            debug("Loading contacts from INBOX");
+            yield load_folder_contacts(inbox, required_fields, c);
+        } else {
+            debug("No INBOX folder found!");
+        }
+
+        var sent = account.get_special_folder(Geary.Folder.SpecialUse.SENT);
+        debug("load_from_account: sent=%p", sent);
+        if (sent != null) {
+            debug("Loading contacts from SENT");
+            yield load_folder_contacts(sent, required_fields, c);
+        } else {
+            debug("No SENT folder found!");
+        }
+
+        debug("Loaded contacts, total: %d", _contacts.size);
+    }
+
+    private async void load_folder_contacts(Geary.Folder folder,
+                                            Geary.Email.Field required_fields,
+                                            GLib.Cancellable? cancellable)
+        throws GLib.Error {
+        debug("load_folder_contacts: folder=%s, state=%d", folder.path.to_string(), folder.get_open_state());
+        
+        var c = cancellable;
+        if (c == null) {
+            c = new GLib.Cancellable();
+        }
+        
+        int count = 100;
+        var emails = yield folder.list_email_by_id_async(
+            null,
+            count,
+            required_fields,
+            Geary.Folder.ListFlags.OLDEST_TO_NEWEST,
+            c
+        );
+
+        debug("load_folder_contacts: got %d emails", emails != null ? emails.size : 0);
+        if (emails != null) {
+            foreach (var email in emails) {
+                add_email_contacts(email);
+            }
+        }
     }
 
     public Gee.Collection<Geary.Contact> get_all() {
