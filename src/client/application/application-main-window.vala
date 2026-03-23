@@ -412,6 +412,7 @@ public class Application.MainWindow :
     [GtkChild] private unowned Hdy.Leaflet inner_leaflet;
 
     [GtkChild] private unowned Gtk.ScrolledWindow folder_list_scrolled;
+    [GtkChild] private unowned Gtk.ScrolledWindow contact_list_scrolled;
 
     [GtkChild] private unowned Gtk.Box conversation_list_box;
     [GtkChild] private unowned Gtk.Revealer conversation_list_actions_revealer;
@@ -2413,7 +2414,11 @@ public class Application.MainWindow :
         if (this.contact_list == null) {
             this.contact_list = new ContactList.Tree();
             this.contact_list.contact_selected.connect(on_contact_selected);
+            this.contact_list_scrolled.add(this.contact_list);
         }
+        
+        this.folder_list_scrolled.visible = false;
+        this.contact_list_scrolled.visible = true;
         
         var inbox = this.selected_account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
         if (inbox != null) {
@@ -2426,12 +2431,23 @@ public class Application.MainWindow :
     }
 
     private void show_folder_view() {
-        // Restore folder list view
+        this.folder_list_scrolled.visible = true;
+        this.contact_list_scrolled.visible = false;
     }
+
+    private ContactConversationListModel? contact_email_model;
 
     private void on_contact_selected(Geary.Contact? contact) {
         if (contact != null) {
             debug("Contact selected: %s", contact.email);
+            
+            if (this.contact_email_model == null) {
+                this.contact_email_model = new ContactConversationListModel();
+            }
+            
+            if (this.selected_account != null) {
+                this.contact_email_model.set_filter_contact(contact);
+            }
         }
     }
 

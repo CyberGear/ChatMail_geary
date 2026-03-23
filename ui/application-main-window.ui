@@ -52,11 +52,25 @@
                               <style>
                                 <class name="geary-folder"/>
                               </style>
-                          </object>
-                          <packing>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
+                           </object>
+                           <packing>
+                             <property name="fill">True</property>
+                             <property name="position">1</property>
+                           </packing>
+                        </child>
+                        <child>
+                           <object class="GtkScrolledWindow" id="contact_list_scrolled">
+                              <property name="visible">False</property>
+                              <property name="vexpand">True</property>
+                              <property name="hscrollbar_policy">never</property>
+                              <style>
+                                <class name="geary-contact"/>
+                              </style>
+                           </object>
+                           <packing>
+                             <property name="fill">True</property>
+                             <property name="position">2</property>
+                           </packing>
                         </child>
                       </object>
                       <packing>

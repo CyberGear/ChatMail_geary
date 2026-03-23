@@ -3,16 +3,16 @@
 ## In Progress
 
 <!-- Tasks currently being worked on -->
-- [ ] Implement new "Contact-based" email view
 
 ## Planned
 
 <!-- Tasks planned for future development -->
-- [ ] implement drafts, compose and other may be needed features
+- [ ] Implement drafts, compose and other may be needed features in contact view
 
 ## Done
 
 <!-- Completed tasks -->
+- [x] Implement new "Contact-based" email view (basic implementation)
 - [x] Explore codebase to understand current UI architecture
 - [x] Explore data layer (Folder, Email, ContactStore APIs)
 - [x] Fix build: install gcr-devel dependency
