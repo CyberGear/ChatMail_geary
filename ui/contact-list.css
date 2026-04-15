@@ -1,0 +1,87 @@
+/*
+ * Copyright 2026 Software Freedom Conservancy Inc.
+ *
+ * This software is licensed under the GNU Lesser General Public License
+ * (version 2.1 or later). See the COPYING file in this distribution.
+ */
+
+/* Contact List (Column 1) */
+
+.contact-list-view {
+  min-width: 240px;
+}
+
+.contact-list-account-header {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  padding: 8px 12px;
+  opacity: 0.6;
+}
+
+.contact-list-row {
+  padding: 9px 12px;
+  border: none;
+}
+
+.contact-list-row:selected {
+  border-left: 3px solid @theme_selected_bg_color;
+}
+
+.contact-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.contact-email {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.contact-badge {
+  background-color: @theme_selected_bg_color;
+  color: white;
+  border-radius: 9px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 16px;
+}
+
+/* Contact Email List (Column 2) */
+
+.contact-email-list-header {
+  padding: 10px 14px;
+}
+
+.contact-email-row {
+  padding: 10px 14px;
+}
+
+.contact-email-row:selected {
+  border-left: 3px solid @theme_selected_bg_color;
+}
+
+.direction-incoming .arrow-label {
+  color: #5b9bd5;
+  font-size: 15px;
+}
+
+.direction-outgoing .arrow-label {
+  color: #6bae6b;
+  font-size: 15px;
+}
+
+.email-subject {
+  font-weight: 600;
+}
+
+.email-preview {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.email-date {
+  font-size: 10px;
+  opacity: 0.6;
+}

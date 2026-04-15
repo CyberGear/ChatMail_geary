@@ -15,7 +15,7 @@ Redesign the three-column layout from **Folders → Conversations → Email** to
 | Contact display | Avatar (colored initials) + name + email + unread badge |
 | Account grouping | Separated by account (header per account) |
 | Contact sorting | Most recent email first |
-| Direction indicator | Received: blue ↓ arrow on left. Sent: green ↑ arrow on right |
+| Direction indicator | Received: blue ↓ arrow on left. Sent: green ↑ arrow on right, newest on the bottom |
 | Email threading | Single email view (no conversation threading) |
 | Compose | Reply/compose opens in column 3 |
 | Color scheme | Unified dark palette (see Color Palette section) |
@@ -58,7 +58,7 @@ Redesign the three-column layout from **Folders → Conversations → Email** to
 ┌──────────────────────────────┐
 │ [AJ] Alice Johnson  6 emails │  ← contact header
 ├──────────────────────────────┤
-│ ↓  Re: Project timeline  2h │  ← incoming (arrow left)
+│ ↓  Re: Project timeline  2h  │  ← incoming (arrow left)
 │    Thanks for the update...  │
 │                              │
 │    Project timeline    Yest  │  ← outgoing (arrow right)
@@ -73,7 +73,7 @@ Redesign the three-column layout from **Folders → Conversations → Email** to
 - **Direction detection**: If `email.from` matches any of `account.information.sender_mailboxes` → outgoing; otherwise → incoming
 - **Arrow placement**: Incoming = blue `↓` on left margin, right margin empty. Outgoing = left margin empty, green `↑` on right margin
 - **Row content**: Subject (bold), preview snippet, date
-- **Sorting**: Newest first (by email date)
+- **Sorting**: Newest last (by email date) it is scrolled to the bottom.
 - **Selection**: Clicking an email shows it in column 3
 
 ### Column 3 — Email Viewer (modified from ConversationViewer)

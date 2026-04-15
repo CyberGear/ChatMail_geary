@@ -364,6 +364,10 @@ public class Application.MainWindow :
     public ConversationList.View conversation_list_view  { get; private set; }
     public ConversationViewer conversation_viewer { get; private set; }
 
+    // Contact-centric UI widgets
+    internal ContactList.View contact_list { get; private set; }
+    internal ContactEmailList.View contact_email_list { get; private set; }
+
     public Components.InfoBarStack conversation_list_info_bars {
         get; private set; default = new Components.InfoBarStack(PRIORITY_QUEUE);
     }
@@ -1116,6 +1120,9 @@ public class Application.MainWindow :
 
             add_folders(added);
             this.accounts.add(to_add);
+
+            // Populate contact list for this account
+            this.contact_list.add_account(to_add.account);
         }
     }
 
@@ -1163,6 +1170,7 @@ public class Application.MainWindow :
             // Finally, remove the account and its folders
             remove_folders(to_remove.get_folders(), false);
             this.folder_list.remove_account(to_remove.account);
+            this.contact_list.remove_account(to_remove.account);
             this.accounts.remove(to_remove);
         }
     }
@@ -1315,26 +1323,33 @@ public class Application.MainWindow :
         this.conversation_list_box.pack_start(this.search_bar, false, false, 0);
 
 
-        // Folder list
+        // Folder list (kept for compatibility but not shown in UI)
         this.folder_list.folder_selected.connect(on_folder_selected);
         this.folder_list.move_conversation.connect(on_move_conversation);
         this.folder_list.copy_conversation.connect(on_copy_conversation);
         this.folder_list.folder_activated.connect(on_folder_activated);
-        this.folder_list_scrolled.add(this.folder_list);
 
-        // Conversation list
-        this.conversation_list_box.pack_start(
-            this.conversation_list_info_bars, false, false, 0
-        );
+        // Contact list (replaces folder list in column 1)
+        this.contact_list = new ContactList.View();
+        this.contact_list.contact_selected.connect(on_contact_selected);
+        this.contact_list.show_all();
+        this.folder_list_scrolled.add(this.contact_list);
 
+        // Conversation list (kept for compatibility but not shown in UI)
         this.conversation_list_view = new ConversationList.View(this.application.config);
         this.conversation_list_view.mark_conversations.connect(on_mark_conversations);
         this.conversation_list_view.conversations_selected.connect(on_conversations_selected);
         this.conversation_list_view.conversation_activated.connect(on_conversation_activated);
         this.conversation_list_view.visible_conversations.notify.connect(on_visible_conversations_changed);
 
+        // Contact email list (replaces conversation list in column 2)
+        this.contact_email_list = new ContactEmailList.View();
+        this.contact_email_list.email_selected.connect(on_email_selected);
         this.conversation_list_box.pack_start(
-            this.conversation_list_view, true, true, 0
+            this.conversation_list_info_bars, false, false, 0
+        );
+        this.conversation_list_box.pack_start(
+            this.contact_email_list, true, true, 0
         );
 
         // Conversation viewer
@@ -2365,6 +2380,36 @@ public class Application.MainWindow :
 
     private void on_folder_selected(Geary.Folder? folder) {
         this.select_folder.begin(folder, true);
+    }
+
+    /** Handles contact selection from the contact list (column 1). */
+    private void on_contact_selected(ContactList.Contact contact,
+                                     Geary.Account account) {
+        this.contact_email_list.set_contact(contact, account);
+        this.conversation_viewer.show_none_selected();
+        // Navigate to email list pane on mobile
+        if (this.inner_leaflet.folded) {
+            this.inner_leaflet.navigate(Hdy.NavigationDirection.FORWARD);
+        }
+    }
+
+    /** Handles email selection from the contact email list (column 2). */
+    private void on_email_selected(Geary.Email email) {
+        Geary.Account? account = null;
+        // Find the account this email belongs to
+        foreach (var ctx in this.accounts) {
+            account = ctx.account;
+            break;
+        }
+        if (account != null) {
+            this.conversation_viewer.load_single_email(
+                email, account.information
+            );
+        }
+        // Navigate to viewer pane on mobile
+        if (this.outer_leaflet.folded) {
+            this.outer_leaflet.navigate(Hdy.NavigationDirection.FORWARD);
+        }
     }
 
     private void on_select_inbox(SimpleAction action, Variant? parameter) {

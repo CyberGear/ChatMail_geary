@@ -253,6 +253,176 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
     }
 
     /**
+     * Shows a single email in the viewer (no conversation threading).
+     */
+    public void load_single_email(Geary.Email email,
+                                  Geary.AccountInformation account_info) {
+        remove_current_list();
+
+        var container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+
+        // Header section
+        var header = new Gtk.Box(Gtk.Orientation.VERTICAL, 4);
+        header.margin_start = 24;
+        header.margin_end = 24;
+        header.margin_top = 18;
+        header.margin_bottom = 18;
+
+        // Subject
+        if (email.subject != null) {
+            var subject_label = new Gtk.Label(
+                Util.Email.strip_subject_prefixes(email)
+            );
+            subject_label.xalign = 0;
+            subject_label.wrap = true;
+            subject_label.selectable = true;
+            subject_label.get_style_context().add_class("email-viewer-subject");
+            var subject_attrs = new Pango.AttrList();
+            subject_attrs.insert(Pango.attr_weight_new(Pango.Weight.SEMIBOLD));
+            subject_attrs.insert(Pango.attr_scale_new(1.25));
+            subject_label.attributes = subject_attrs;
+            header.pack_start(subject_label, false, false, 0);
+        }
+
+        // Sender info
+        var sender_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
+        sender_box.margin_top = 8;
+
+        if (email.from != null && email.from.size > 0) {
+            var from_addr = email.from.get(0);
+            string initials = "?";
+            if (from_addr.has_distinct_name()) {
+                var parts = from_addr.name.split(" ");
+                if (parts.length >= 2) {
+                    initials = parts[0].substring(0, 1).up()
+                             + parts[parts.length - 1].substring(0, 1).up();
+                } else if (parts.length == 1 && parts[0].length > 0) {
+                    initials = parts[0].substring(0, 1).up();
+                }
+            } else if (from_addr.address.length > 0) {
+                initials = from_addr.address.substring(0, 1).up();
+            }
+
+            // Avatar
+            var avatar = new Gtk.DrawingArea();
+            avatar.set_size_request(30, 30);
+            avatar.draw.connect((cr) => {
+                cr.arc(15, 15, 15, 0, 2 * Math.PI);
+                cr.set_source_rgb(0.486, 0.557, 0.949); // #7c8ef2
+                cr.fill();
+                cr.select_font_face("Sans",
+                    Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
+                cr.set_font_size(11);
+                Cairo.TextExtents te;
+                cr.text_extents(initials, out te);
+                cr.move_to(15 - te.width / 2 - te.x_bearing,
+                           15 - te.height / 2 - te.y_bearing);
+                cr.set_source_rgb(1, 1, 1);
+                cr.show_text(initials);
+                return true;
+            });
+            sender_box.pack_start(avatar, false, false, 0);
+
+            // Sender name and details
+            var info_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
+            string from_text;
+            if (from_addr.has_distinct_name()) {
+                from_text = "<b>%s</b> <span alpha='60%'>&lt;%s&gt;</span>".printf(
+                    GLib.Markup.escape_text(from_addr.name),
+                    GLib.Markup.escape_text(from_addr.address)
+                );
+            } else {
+                from_text = "<b>%s</b>".printf(
+                    GLib.Markup.escape_text(from_addr.address)
+                );
+            }
+            var from_label = new Gtk.Label(null);
+            from_label.set_markup(from_text);
+            from_label.xalign = 0;
+            from_label.selectable = true;
+            info_box.pack_start(from_label, false, false, 0);
+
+            // To line and date
+            var meta_parts = new GLib.StringBuilder();
+            if (email.to != null && email.to.size > 0) {
+                meta_parts.append("to ");
+                bool is_to_me = false;
+                foreach (var addr in email.to) {
+                    if (account_info.has_sender_mailbox(addr)) {
+                        is_to_me = true;
+                        break;
+                    }
+                }
+                if (is_to_me) {
+                    meta_parts.append("me");
+                } else {
+                    meta_parts.append(
+                        GLib.Markup.escape_text(email.to.get(0).address)
+                    );
+                }
+            }
+            if (email.date != null) {
+                if (meta_parts.len > 0) meta_parts.append(" · ");
+                meta_parts.append(
+                    Util.Date.pretty_print(
+                        email.date.value,
+                        Util.Date.ClockFormat.LOCALE_DEFAULT
+                    )
+                );
+            }
+            if (meta_parts.len > 0) {
+                var meta_label = new Gtk.Label(null);
+                meta_label.set_markup(
+                    "<span color='#707088' size='small'>%s</span>".printf(
+                        meta_parts.str
+                    )
+                );
+                meta_label.xalign = 0;
+                info_box.pack_start(meta_label, false, false, 0);
+            }
+
+            sender_box.pack_start(info_box, true, true, 0);
+        }
+
+        header.pack_start(sender_box, false, false, 0);
+        container.pack_start(header, false, false, 0);
+
+        // Separator
+        var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        container.pack_start(sep, false, false, 0);
+
+        // Body (preview text for now, full body rendering can be added later)
+        var body_scroll = new Gtk.ScrolledWindow(null, null);
+        body_scroll.hscrollbar_policy = Gtk.PolicyType.NEVER;
+        body_scroll.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+
+        var body_label = new Gtk.Label(email.get_preview_as_string());
+        body_label.wrap = true;
+        body_label.xalign = 0;
+        body_label.yalign = 0;
+        body_label.selectable = true;
+        body_label.margin_start = 24;
+        body_label.margin_end = 24;
+        body_label.margin_top = 24;
+        body_label.margin_bottom = 24;
+        var body_attrs = new Pango.AttrList();
+        body_attrs.insert(Pango.attr_scale_new(1.05));
+        body_label.attributes = body_attrs;
+        body_scroll.add(body_label);
+
+        container.pack_start(body_scroll, true, true, 0);
+        container.show_all();
+
+        // Put it in the conversation scroller
+        Gtk.Viewport viewport = new Gtk.Viewport(null, null);
+        viewport.show();
+        viewport.add(container);
+        this.conversation_scroller.add(viewport);
+
+        base.set_visible_child(this.conversation_page);
+    }
+
+    /**
      * Shows a conversation in the viewer.
      */
     public async void load_conversation(Geary.App.Conversation conversation,

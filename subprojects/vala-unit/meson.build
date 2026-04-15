@@ -3,7 +3,7 @@ project(
   [ 'vala', 'c' ],
   version: '2.0',
   license: 'LGPL2.1+',
-  meson_version: '>= 1.7',
+  meson_version: '>= 1.3',
 )
 
 enable_install = get_option('install')

@@ -387,6 +387,15 @@ public class Application.Client : Gtk.Application {
         );
         load_css(provider,
                  "resource:///org/gnome/Geary/geary.css");
+        // Load contact-centric UI CSS
+        var contact_provider = new Gtk.CssProvider();
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Display.get_default().get_default_screen(),
+            contact_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+        load_css(contact_provider,
+                 "resource:///org/gnome/Geary/contact-list.css");
         load_css(this.single_key_shortcuts,
                  "resource:///org/gnome/Geary/single-key-shortcuts.css");
         update_single_key_shortcuts();

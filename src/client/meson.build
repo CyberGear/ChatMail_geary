@@ -88,6 +88,15 @@ client_vala_sources = files(
   'composer/contact-entry-completion.vala',
   'composer/spell-check-popover.vala',
 
+  'contact-list/contact-list-account-header.vala',
+  'contact-list/contact-list-contact.vala',
+  'contact-list/contact-list-model.vala',
+  'contact-list/contact-list-row.vala',
+  'contact-list/contact-list-view.vala',
+
+  'contact-email-list/contact-email-list-row.vala',
+  'contact-email-list/contact-email-list-view.vala',
+
   'conversation-list/conversation-list-model.vala',
   'conversation-list/conversation-list-participant.vala',
   'conversation-list/conversation-list-row.vala',
@@ -158,6 +167,7 @@ client_dependencies = [
   gck,
   gcr,
   engine_dep,
+  sqlite,
   gee,
   gio,
   gmime,

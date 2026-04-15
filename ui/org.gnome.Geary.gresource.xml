@@ -11,6 +11,7 @@
     <file compressed="true">darkreader.js</file>
     <file compressed="true">components-web-view.js</file>
     <file compressed="true">components-web-view.css</file>
+    <file compressed="true">contact-list.css</file>
     <file compressed="true" preprocess="xml-stripblanks">components-attachment-pane.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">components-attachment-pane-menus.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">components-attachment-view.ui</file>
