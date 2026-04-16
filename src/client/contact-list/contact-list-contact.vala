@@ -37,6 +37,9 @@ internal class ContactList.Contact : GLib.Object {
     /** Timestamp of the most recent email activity, or null if unknown. */
     public GLib.DateTime? last_activity { get; set; }
 
+    /** Total number of emails with this contact. */
+    public uint total_count { get; set; }
+
     /** Number of unread messages from this contact. */
     public uint unread_count { get; set; }
 
@@ -51,11 +54,13 @@ internal class ContactList.Contact : GLib.Object {
     public Contact(Geary.RFC822.MailboxAddress address,
                    string display_name,
                    GLib.DateTime? last_activity,
+                   uint total_count,
                    uint unread_count) {
         this.rfc822_address = address;
         this.display_name = display_name;
         this.email = address.address;
         this.last_activity = last_activity;
+        this.total_count = total_count;
         this.unread_count = unread_count;
         this.avatar_color = compute_avatar_color(this.email);
     }

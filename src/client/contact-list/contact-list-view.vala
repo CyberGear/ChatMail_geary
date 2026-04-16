@@ -67,6 +67,27 @@ internal class ContactList.View : Gtk.Box {
     }
 
     /**
+     * Decrements the unread count for the given contact email and
+     * updates the row's bold state. Call this when an email from a
+     * contact is marked as read.
+     */
+    public void decrement_unread(string contact_email) {
+        string key = contact_email.down();
+        foreach (var entry in this.account_rows.entries) {
+            foreach (var gtk_row in entry.value) {
+                var row = gtk_row as Row;
+                if (row != null && row.contact.email.down() == key) {
+                    if (row.contact.unread_count > 0) {
+                        row.contact.unread_count--;
+                    }
+                    row.update_read_state();
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
      * Adds an account and kicks off an asynchronous contact load.
      *
      * An empty model with just the account header is shown immediately;
@@ -204,13 +225,16 @@ internal class ContactList.View : Gtk.Box {
 
             // Query contacts: from inbox senders + sent recipients
             // Uses the same matching as column 2: extract email between < >
+            // Also tracks unread count (inbox only, no \Seen flag)
             string sql = """
                 WITH inbox_senders AS (
                     SELECT LOWER(SUBSTR(m.from_field,
                                 INSTR(m.from_field, '<') + 1,
                                 INSTR(m.from_field, '>') - INSTR(m.from_field, '<') - 1
                            )) as email,
-                           m.date_time_t
+                           m.date_time_t,
+                           CASE WHEN (m.flags IS NULL OR m.flags = '' OR m.flags NOT LIKE '%%\Seen%%')
+                                THEN 1 ELSE 0 END as is_unread
                     FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?1
@@ -222,7 +246,8 @@ internal class ContactList.View : Gtk.Box {
                                 INSTR(m.to_field, '<') + 1,
                                 INSTR(m.to_field, '>') - INSTR(m.to_field, '<') - 1
                            )) as email,
-                           m.date_time_t
+                           m.date_time_t,
+                           0 as is_unread
                     FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?2
@@ -230,13 +255,14 @@ internal class ContactList.View : Gtk.Box {
                       AND m.date_time_t > 0
                 ),
                 all_emails AS (
-                    SELECT email, date_time_t FROM inbox_senders
+                    SELECT email, date_time_t, is_unread FROM inbox_senders
                     UNION ALL
-                    SELECT email, date_time_t FROM sent_recipients
+                    SELECT email, date_time_t, is_unread FROM sent_recipients
                 )
                 SELECT a.email,
                        MAX(a.date_time_t) as last_date,
-                       COUNT(*) as cnt,
+                       COUNT(*) as total_cnt,
+                       SUM(a.is_unread) as unread_cnt,
                        c.real_name
                 FROM all_emails a
                 LEFT JOIN ContactTable c ON LOWER(c.email) = a.email
@@ -256,8 +282,9 @@ internal class ContactList.View : Gtk.Box {
                 while (stmt.step() == Sqlite.ROW) {
                     string email = stmt.column_text(0);
                     int64 ts = stmt.column_int64(1);
-                    int count = stmt.column_int(2);
-                    string? real_name = stmt.column_text(3);
+                    int total = stmt.column_int(2);
+                    int unread = stmt.column_int(3);
+                    string? real_name = stmt.column_text(4);
 
                     if (email == null || email.length == 0) continue;
 
@@ -266,7 +293,8 @@ internal class ContactList.View : Gtk.Box {
                     var addr = new Geary.RFC822.MailboxAddress(display, email);
                     var last_activity = new DateTime.from_unix_local(ts);
                     var contact = new Contact(
-                        addr, display, last_activity, (uint) count
+                        addr, display, last_activity,
+                        (uint) total, (uint) unread
                     );
                     model.add_contact(contact);
                 }

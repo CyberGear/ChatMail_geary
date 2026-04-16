@@ -17,7 +17,8 @@ internal class ContactEmailList.View : Gtk.Box {
     /** The required email fields for listing. */
     public const Geary.Email.Field REQUIRED_FIELDS = (
         Geary.Email.Field.ENVELOPE |
-        Geary.Email.Field.PREVIEW
+        Geary.Email.Field.PREVIEW |
+        Geary.Email.Field.FLAGS
     );
 
     /** Emitted when the user activates (clicks) an email row. */
@@ -57,6 +58,12 @@ internal class ContactEmailList.View : Gtk.Box {
      *
      * Passing null clears the view.
      */
+    /** Returns the currently selected email row, if any. */
+    public ContactEmailList.Row? get_selected_row() {
+        var row = this.list_box.get_selected_row();
+        return row as ContactEmailList.Row;
+    }
+
     public void set_contact(ContactList.Contact? contact,
                             Geary.Account? account) {
         clear();

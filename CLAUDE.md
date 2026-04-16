@@ -152,9 +152,9 @@ This fork replaces Geary's folder-based navigation with a contact-centric layout
 
 ### Layout: Contacts → Emails → Viewer
 
-- **Column 1** (`src/client/contact-list/`): Contact list grouped by account, sorted by most recent email. Avatar initials + name + email + badge count.
-- **Column 2** (`src/client/contact-email-list/`): Emails filtered by selected contact. Inbox emails matched by `from`, Sent emails matched by `to`. Direction arrows: ↓ incoming (left), ↑ outgoing (right).
-- **Column 3**: Single email viewer via `ConversationViewer.load_single_email()` (not threaded conversations).
+- **Column 1** (`src/client/contact-list/`): Contact list grouped by account, sorted by most recent email. Avatar initials + name + email + badge (total email count, grey background with accent text). Name is **bold only when contact has unread emails** — unbolds in real-time as emails are read.
+- **Column 2** (`src/client/contact-email-list/`): Emails filtered by selected contact. Inbox emails matched by `from`, Sent emails matched by `to`. Direction arrows: ↓ incoming (left), ↑ outgoing (right). Subject is **bold only for unread emails** — becomes normal weight when the email is opened in column 3.
+- **Column 3**: Single email viewer via `ConversationViewer.load_single_email()` — async method that fetches full email body via `account.local_fetch_email_async()`, renders HTML in `ConversationWebView` with remote images enabled. Not threaded conversations.
 
 ### How Contact Data Is Sourced
 
@@ -164,12 +164,21 @@ Both the contact list and email list use the **same filtering logic** — this i
 - **Email list filtering** (`contact-email-list-view.vala:collect_from_folder`): Uses `Folder.list_email_by_id_async()` then filters with `address_list_contains()` on `email.from` (inbox) or `email.to/cc/bcc` (sent).
 - **Any change to filtering logic must be applied to BOTH** to keep counts and lists consistent.
 
+### Read/Unread State Flow
+
+Unread state is tracked at three levels and must stay in sync:
+
+1. **DB level** (`MessageTable.flags`): `\Seen` = read, empty/null = unread. The SQL query in `populate_account` computes `unread_cnt` per contact using `SUM(is_unread)` where `is_unread = flags IS NULL OR flags NOT LIKE '%\Seen%'`. Only inbox emails can be unread (sent emails always count as read).
+2. **Contact row** (column 1): `Contact.unread_count` drives bold state. `Row.update_read_state()` toggles bold markup. `View.decrement_unread(email)` finds the matching row and decrements.
+3. **Email row** (column 2): `Row.is_unread()` checks `email.email_flags.is_unread()`. `Row.mark_read()` removes bold and the `unread` CSS class.
+4. **Trigger**: `MainWindow.mark_email_read()` is called from `on_email_selected`. It: (a) calls `selected_row.mark_read()` on column 2, (b) calls `contact_list.decrement_unread()` on column 1, (c) marks the email as read on IMAP via `FolderSupport.Mark.mark_email_async()`.
+
 ### Local SQLite DB Access
 
 The contact list reads `geary.db` directly via `Sqlite.Database` (added `sqlite` to client meson dependencies). The DB path comes from `account.information.data_dir.get_child("geary.db")`. Key tables:
 
 - `FolderTable` — folder names and attributes. Inbox identified by `name = "INBOX"`, Sent by `\Sent` in attributes.
-- `MessageTable` — `from_field`, `to_field`, `date_time_t` (Unix timestamp). RFC822 format: `"Name" <email@addr>`.
+- `MessageTable` — `from_field`, `to_field`, `date_time_t` (Unix timestamp), `flags` (`\Seen` = read, empty = unread). RFC822 format: `"Name" <email@addr>`.
 - `MessageLocationTable` — links `message_id` to `folder_id`.
 - `ContactTable` — `email`, `real_name`, `highest_importance`.
 
@@ -179,13 +188,13 @@ The old `FolderList.Tree` and `ConversationList.View` are still instantiated in 
 
 ### Known Issues / Future Work
 
-- **Email viewer shows preview text only** — `load_single_email()` renders the preview snippet as plain text, not the full HTML body. To fix: use `ConversationWebView` or `ConversationEmail` to render the full RFC822 message body with HTML.
 - **Multi-recipient sent emails** — The SQL query only extracts the FIRST recipient from `to_field`. Emails sent to multiple recipients where the contact is not the first `to` address may be missed. Fix: parse all addresses from `to_field` in the SQL query or switch to a Vala-side scan.
 - **Contact search** — The search bar filters the already-loaded contact list by name/email substring. It does not re-query the database.
 - **Compose/reply** — The existing Geary composer infrastructure still works but is wired through the old code paths. The `do_compose` method in `ConversationViewer` references `conversation_list_view` which is still instantiated. Full compose integration needs updating.
-- **Unread tracking** — Badge counts show total email count, not unread count. Implementing unread requires checking email flags.
+- **Attachments** — The single email viewer does not display attachment indicators or download UI. The existing `ConversationEmail` widget handles this but is not used by `load_single_email()`.
 - **Responsive layout** — The `HdyLeaflet` folding still works but `on_contact_selected`/`on_email_selected` handlers could be refined for mobile navigation.
 - **WebKit sandbox** — Requires `WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1` env var in some environments where bubblewrap is restricted.
-- **CSS theming** — `ui/contact-list.css` uses `@theme_selected_bg_color` and `opacity` for theme compatibility. Avoid hardcoded hex colors.
+- **CSS theming** — `ui/contact-list.css` uses `@theme_selected_bg_color`, `shade()`, `alpha()` for theme compatibility. Avoid hardcoded hex colors except for direction arrows.
 - **libpeas-2 VAPI** — Generated manually via `vapigen` and placed in `bindings/vapi/libpeas-2.vapi` because Vala 0.56 doesn't ship it. Regenerate if upgrading libpeas.
 - **Meson version** — Root `meson.build` and `subprojects/vala-unit/meson.build` were patched from `>= 1.7` to `>= 1.3` for local builds. Revert when using a system with Meson 1.7+.
+- **New email notifications** — Contact list refreshes on `email_appended`/`email_locally_complete` signals with a 2-second throttle. New contacts from incoming emails will appear after the refresh, but unread counts for existing contacts won't update until the next full refresh.

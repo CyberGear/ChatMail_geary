@@ -2405,10 +2405,53 @@ public class Application.MainWindow :
             this.conversation_viewer.load_single_email.begin(
                 email, account
             );
+            // Mark as read on the server and update the row
+            mark_email_read.begin(email, account);
         }
         // Navigate to viewer pane on mobile
         if (this.outer_leaflet.folded) {
             this.outer_leaflet.navigate(Hdy.NavigationDirection.FORWARD);
+        }
+    }
+
+    /** Marks an email as read and updates the corresponding rows. */
+    private async void mark_email_read(Geary.Email email,
+                                       Geary.Account account) {
+        // Update the email row in column 2 immediately
+        var selected_row = this.contact_email_list.get_selected_row();
+        if (selected_row != null) {
+            selected_row.mark_read();
+        }
+
+        // Update the contact row in column 1 (decrement unread, unbold if 0)
+        if (email.from != null && email.from.size > 0) {
+            this.contact_list.decrement_unread(
+                email.from.get(0).address
+            );
+        }
+
+        // Mark as read on the server via the folder
+        if (email.email_flags != null && email.email_flags.is_unread()) {
+            var flags_to_remove = new Geary.EmailFlags();
+            flags_to_remove.add(Geary.EmailFlags.UNREAD);
+            try {
+                // Find the folder containing this email
+                Geary.Folder? inbox = account.get_special_folder(
+                    Geary.Folder.SpecialUse.INBOX
+                );
+                if (inbox != null) {
+                    var mark_folder = inbox as Geary.FolderSupport.Mark;
+                    if (mark_folder != null) {
+                        var ids = new Gee.ArrayList<Geary.EmailIdentifier>();
+                        ids.add(email.id);
+                        yield mark_folder.mark_email_async(
+                            ids, null, flags_to_remove, null
+                        );
+                    }
+                }
+            } catch (GLib.Error err) {
+                debug("Failed to mark email as read: %s", err.message);
+            }
         }
     }
 

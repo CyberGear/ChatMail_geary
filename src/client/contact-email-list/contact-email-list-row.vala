@@ -11,6 +11,8 @@
  * Shows the email subject, a short preview snippet, the date, and a
  * directional arrow indicating whether the message was incoming or
  * outgoing relative to the account owner.
+ *
+ * Subject is bold when the email is unread; normal weight when read.
  */
 internal class ContactEmailList.Row : Gtk.ListBoxRow {
 
@@ -34,6 +36,21 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
 
         build_ui();
         populate();
+    }
+
+    /** Marks this row as read — removes bold from subject. */
+    public void mark_read() {
+        string subject_text = "";
+        if (this.email.subject != null) {
+            subject_text = Util.Email.strip_subject_prefixes(this.email);
+        }
+        this.subject_label.set_text(subject_text);
+        get_style_context().remove_class("unread");
+    }
+
+    private bool is_unread() {
+        return this.email.email_flags != null &&
+               this.email.email_flags.is_unread();
     }
 
     private void build_ui() {
@@ -92,14 +109,19 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
     }
 
     private void populate() {
-        // Subject (bold)
+        // Subject — bold only if unread
         string subject_text = "";
         if (this.email.subject != null) {
             subject_text = Util.Email.strip_subject_prefixes(this.email);
         }
-        this.subject_label.set_markup(
-            "<b>%s</b>".printf(GLib.Markup.escape_text(subject_text))
-        );
+        if (is_unread()) {
+            this.subject_label.set_markup(
+                "<b>%s</b>".printf(GLib.Markup.escape_text(subject_text))
+            );
+            get_style_context().add_class("unread");
+        } else {
+            this.subject_label.set_text(subject_text);
+        }
 
         // Preview (small, dim)
         string preview_text = this.email.get_preview_as_string();
@@ -124,7 +146,7 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
             "<small>%s</small>".printf(GLib.Markup.escape_text(date_text))
         );
 
-        // Direction arrows and CSS classes
+        // Direction arrows
         if (this.is_outgoing) {
             this.left_arrow_label.set_text("");
             this.right_arrow_label.set_markup(

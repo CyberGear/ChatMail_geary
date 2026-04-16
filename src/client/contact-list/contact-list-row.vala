@@ -82,10 +82,21 @@ internal class ContactList.Row : Gtk.ListBoxRow {
         this.show_all();
     }
 
-    /** Refreshes the unread badge from the current contact state. */
-    public void update_badge() {
+    /** Updates the name label bold state based on unread count. */
+    public void update_read_state() {
         if (this.contact.unread_count > 0) {
-            this.badge_label.set_text(this.contact.unread_count.to_string());
+            this.name_label.set_markup(
+                "<b>%s</b>".printf(GLib.Markup.escape_text(contact.display_name))
+            );
+        } else {
+            this.name_label.set_text(contact.display_name);
+        }
+    }
+
+    /** Refreshes the badge from the current contact state. */
+    public void update_badge() {
+        if (this.contact.total_count > 0) {
+            this.badge_label.set_text(this.contact.total_count.to_string());
             this.badge_label.show();
         } else {
             this.badge_label.hide();
