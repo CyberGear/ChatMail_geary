@@ -1,0 +1,165 @@
+<h2>Full Three-Column Layout</h2>
+<p class="subtitle">Contact list → Email list (filtered by contact) → Email viewer. Does this overall layout work?</p>
+
+<div class="mockup" style="max-width:960px;margin:20px auto">
+  <div class="mockup-header">ChatMail Geary — Full Layout</div>
+  <div class="mockup-body" style="font-family:sans-serif;font-size:12px;line-height:1.3;display:flex;min-height:420px;padding:0">
+
+    <!-- COLUMN 1: Contact List -->
+    <div style="width:220px;border-right:1px solid #444;flex-shrink:0;overflow-y:auto">
+      <!-- Search -->
+      <div style="padding:8px;border-bottom:1px solid #444">
+        <div style="background:#333;border-radius:4px;padding:6px 8px;color:#888;font-size:11px">&#128269; Search contacts...</div>
+      </div>
+      <!-- Account header -->
+      <div style="padding:6px 10px;font-weight:bold;color:#888;font-size:10px;text-transform:uppercase;border-bottom:1px solid #333;background:#1a1a2a">me@gmail.com</div>
+      <!-- Selected contact -->
+      <div style="padding:8px 10px;background:#3a3a4a;display:flex;align-items:center;gap:8px;border-left:3px solid #5b9bd5">
+        <div style="width:28px;height:28px;border-radius:50%;background:#5b9bd5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">AJ</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:12px">Alice Johnson</div>
+          <div style="color:#888;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">alice@example.com</div>
+        </div>
+        <span style="background:#5b9bd5;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px">3</span>
+      </div>
+      <!-- Other contacts -->
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#6b8e5a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">BS</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px">Bob Smith</div>
+          <div style="color:#888;font-size:10px">bob@work.com</div>
+        </div>
+        <span style="background:#5b9bd5;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px">1</span>
+      </div>
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#c47a5a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">CW</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px">Carol Williams</div>
+          <div style="color:#888;font-size:10px">carol@company.org</div>
+        </div>
+      </div>
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#8a6b9a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">DL</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px">David Lee</div>
+          <div style="color:#888;font-size:10px">david@startup.io</div>
+        </div>
+      </div>
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#5a8a8a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">EM</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px">Eva Martinez</div>
+          <div style="color:#888;font-size:10px">eva@design.co</div>
+        </div>
+      </div>
+      <!-- Second account -->
+      <div style="padding:6px 10px;font-weight:bold;color:#888;font-size:10px;text-transform:uppercase;border-bottom:1px solid #333;border-top:1px solid #333;background:#1a1a2a;margin-top:4px">work@company.com</div>
+      <div style="padding:8px 10px;display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#8a7a5a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;flex-shrink:0">HR</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px">HR Department</div>
+          <div style="color:#888;font-size:10px">hr@company.com</div>
+        </div>
+        <span style="background:#5b9bd5;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px">2</span>
+      </div>
+    </div>
+
+    <!-- COLUMN 2: Email List (filtered by selected contact) -->
+    <div style="width:300px;border-right:1px solid #444;flex-shrink:0;overflow-y:auto">
+      <div style="padding:10px 12px;border-bottom:1px solid #444;display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;border-radius:50%;background:#5b9bd5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:10px;flex-shrink:0">AJ</div>
+        <span style="font-weight:600;font-size:13px">Alice Johnson</span>
+        <span style="color:#888;font-size:11px;margin-left:auto">6 emails</span>
+      </div>
+      <!-- Selected email - incoming -->
+      <div style="padding:10px 12px;background:#3a3a4a;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:#5b9bd5;font-size:16px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">Re: Project timeline</span><span style="color:#888;font-size:11px">2h ago</span></div>
+          <div style="color:#aaa;font-size:11px;margin-top:3px">Thanks for the update, I'll review the...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+      <!-- Outgoing -->
+      <div style="padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+        <span style="width:16px"></span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">Project timeline</span><span style="color:#888;font-size:11px">Yesterday</span></div>
+          <div style="color:#aaa;font-size:11px;margin-top:3px">Hi Alice, here's the updated timeline for...</div>
+        </div>
+        <span style="color:#6b8e5a;font-size:16px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8593;</span>
+      </div>
+      <!-- Incoming -->
+      <div style="padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:#5b9bd5;font-size:16px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">Quick question</span><span style="color:#888;font-size:11px">Mar 12</span></div>
+          <div style="color:#aaa;font-size:11px;margin-top:3px">Hey, do you have a minute to discuss the...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+      <!-- Outgoing -->
+      <div style="padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+        <span style="width:16px"></span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">Meeting notes</span><span style="color:#888;font-size:11px">Mar 10</span></div>
+          <div style="color:#aaa;font-size:11px;margin-top:3px">Here are the notes from today's sync...</div>
+        </div>
+        <span style="color:#6b8e5a;font-size:16px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8593;</span>
+      </div>
+      <!-- Incoming -->
+      <div style="padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:#5b9bd5;font-size:16px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">Re: Meeting notes</span><span style="color:#888;font-size:11px">Mar 8</span></div>
+          <div style="color:#aaa;font-size:11px;margin-top:3px">Great summary, I've added a few comments...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+    </div>
+
+    <!-- COLUMN 3: Email Viewer -->
+    <div style="flex:1;overflow-y:auto;padding:0">
+      <div style="padding:16px 20px;border-bottom:1px solid #444">
+        <h3 style="margin:0 0 8px 0;font-size:16px;color:#eee">Re: Project timeline</h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div style="width:28px;height:28px;border-radius:50%;background:#5b9bd5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px">AJ</div>
+          <div>
+            <div style="font-size:13px"><strong>Alice Johnson</strong> <span style="color:#888">&lt;alice@example.com&gt;</span></div>
+            <div style="font-size:11px;color:#888">to me &middot; 2 hours ago</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px;color:#ccc;font-size:13px;line-height:1.6">
+        <p style="margin:0 0 12px">Hi,</p>
+        <p style="margin:0 0 12px">Thanks for the update on the project timeline. I've reviewed the changes and everything looks good for Q2.</p>
+        <p style="margin:0 0 12px">A few things I noticed:</p>
+        <ul style="margin:0 0 12px;padding-left:20px">
+          <li>The design phase deadline seems tight — can we extend by a week?</li>
+          <li>We should schedule a mid-sprint review for April 15th</li>
+          <li>Budget allocation for the testing phase needs confirmation</li>
+        </ul>
+        <p style="margin:0 0 12px">Let me know if you want to discuss over a call.</p>
+        <p style="margin:0">Best,<br>Alice</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">&#10003;</div>
+    <div class="content">
+      <h3>Looks good — this is the layout I want</h3>
+      <p>Contact list (avatars, grouped by account) → Email list (arrows for direction) → Email viewer</p>
+    </div>
+  </div>
+  <div class="option" data-choice="revise" onclick="toggleSelect(this)">
+    <div class="letter">&#8634;</div>
+    <div class="content">
+      <h3>Needs changes</h3>
+      <p>Tell me what to adjust in the terminal.</p>
+    </div>
+  </div>
+</div>

@@ -253,10 +253,33 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
     }
 
     /**
-     * Shows a single email in the viewer (no conversation threading).
+     * Shows a single email in the viewer with full HTML body.
+     *
+     * Fetches the complete email body from the local store and renders
+     * it using a ConversationWebView.
      */
-    public void load_single_email(Geary.Email email,
-                                  Geary.AccountInformation account_info) {
+    public async void load_single_email(Geary.Email email,
+                                        Geary.Account account) {
+        remove_current_list();
+        show_loading();
+
+        var account_info = account.information;
+
+        // Fetch the full email body if not already available
+        Geary.Email full_email = email;
+        if (!email.fields.fulfills(Geary.Email.REQUIRED_FOR_MESSAGE)) {
+            try {
+                full_email = yield account.local_fetch_email_async(
+                    email.id,
+                    Geary.Email.REQUIRED_FOR_MESSAGE | email.fields,
+                    null
+                );
+            } catch (GLib.Error err) {
+                debug("Could not fetch full email: %s", err.message);
+                // Fall back to preview if body unavailable
+            }
+        }
+
         remove_current_list();
 
         var container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -269,14 +292,13 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
         header.margin_bottom = 18;
 
         // Subject
-        if (email.subject != null) {
+        if (full_email.subject != null) {
             var subject_label = new Gtk.Label(
-                Util.Email.strip_subject_prefixes(email)
+                Util.Email.strip_subject_prefixes(full_email)
             );
             subject_label.xalign = 0;
             subject_label.wrap = true;
             subject_label.selectable = true;
-            subject_label.get_style_context().add_class("email-viewer-subject");
             var subject_attrs = new Pango.AttrList();
             subject_attrs.insert(Pango.attr_weight_new(Pango.Weight.SEMIBOLD));
             subject_attrs.insert(Pango.attr_scale_new(1.25));
@@ -288,8 +310,8 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
         var sender_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 10);
         sender_box.margin_top = 8;
 
-        if (email.from != null && email.from.size > 0) {
-            var from_addr = email.from.get(0);
+        if (full_email.from != null && full_email.from.size > 0) {
+            var from_addr = full_email.from.get(0);
             string initials = "?";
             if (from_addr.has_distinct_name()) {
                 var parts = from_addr.name.split(" ");
@@ -308,17 +330,17 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
             avatar.set_size_request(30, 30);
             avatar.draw.connect((cr) => {
                 cr.arc(15, 15, 15, 0, 2 * Math.PI);
-                cr.set_source_rgb(0.486, 0.557, 0.949); // #7c8ef2
+                cr.set_source_rgb(0.486, 0.557, 0.949);
                 cr.fill();
-                cr.select_font_face("Sans",
-                    Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
-                cr.set_font_size(11);
-                Cairo.TextExtents te;
-                cr.text_extents(initials, out te);
-                cr.move_to(15 - te.width / 2 - te.x_bearing,
-                           15 - te.height / 2 - te.y_bearing);
+                var layout = Pango.cairo_create_layout(cr);
+                var font_desc = Pango.FontDescription.from_string("Sans Bold 11");
+                layout.set_font_description(font_desc);
+                layout.set_text(initials, -1);
+                int tw, th;
+                layout.get_pixel_size(out tw, out th);
+                cr.move_to(15 - tw / 2.0, 15 - th / 2.0);
                 cr.set_source_rgb(1, 1, 1);
-                cr.show_text(initials);
+                Pango.cairo_show_layout(cr, layout);
                 return true;
             });
             sender_box.pack_start(avatar, false, false, 0);
@@ -327,7 +349,7 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
             var info_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
             string from_text;
             if (from_addr.has_distinct_name()) {
-                from_text = "<b>%s</b> <span alpha='60%'>&lt;%s&gt;</span>".printf(
+                from_text = "<b>%s</b> <span alpha='60%%'>&lt;%s&gt;</span>".printf(
                     GLib.Markup.escape_text(from_addr.name),
                     GLib.Markup.escape_text(from_addr.address)
                 );
@@ -344,10 +366,10 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
 
             // To line and date
             var meta_parts = new GLib.StringBuilder();
-            if (email.to != null && email.to.size > 0) {
+            if (full_email.to != null && full_email.to.size > 0) {
                 meta_parts.append("to ");
                 bool is_to_me = false;
-                foreach (var addr in email.to) {
+                foreach (var addr in full_email.to) {
                     if (account_info.has_sender_mailbox(addr)) {
                         is_to_me = true;
                         break;
@@ -357,15 +379,15 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
                     meta_parts.append("me");
                 } else {
                     meta_parts.append(
-                        GLib.Markup.escape_text(email.to.get(0).address)
+                        GLib.Markup.escape_text(full_email.to.get(0).address)
                     );
                 }
             }
-            if (email.date != null) {
-                if (meta_parts.len > 0) meta_parts.append(" · ");
+            if (full_email.date != null) {
+                if (meta_parts.len > 0) meta_parts.append(" \xc2\xb7 ");
                 meta_parts.append(
                     Util.Date.pretty_print(
-                        email.date.value,
+                        full_email.date.value,
                         Util.Date.ClockFormat.LOCALE_DEFAULT
                     )
                 );
@@ -373,7 +395,7 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
             if (meta_parts.len > 0) {
                 var meta_label = new Gtk.Label(null);
                 meta_label.set_markup(
-                    "<span color='#707088' size='small'>%s</span>".printf(
+                    "<span alpha='60%%' size='small'>%s</span>".printf(
                         meta_parts.str
                     )
                 );
@@ -391,26 +413,42 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
         var sep = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
         container.pack_start(sep, false, false, 0);
 
-        // Body (preview text for now, full body rendering can be added later)
-        var body_scroll = new Gtk.ScrolledWindow(null, null);
-        body_scroll.hscrollbar_policy = Gtk.PolicyType.NEVER;
-        body_scroll.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+        // Body — use ConversationWebView for full HTML rendering
+        string body_html = "";
+        if (full_email.fields.fulfills(Geary.Email.REQUIRED_FOR_MESSAGE)) {
+            try {
+                Geary.RFC822.Message message = full_email.get_message();
+                if (message.has_html_body()) {
+                    body_html = message.get_html_body(null);
+                } else if (message.has_plain_body()) {
+                    body_html = message.get_plain_body(true, null);
+                }
+            } catch (GLib.Error err) {
+                debug("Could not get message body: %s", err.message);
+                body_html = GLib.Markup.escape_text(
+                    full_email.get_preview_as_string()
+                );
+            }
+        } else {
+            // Fallback to preview text wrapped in basic HTML
+            body_html = "<pre style='white-space:pre-wrap;font-family:sans-serif'>%s</pre>".printf(
+                GLib.Markup.escape_text(full_email.get_preview_as_string())
+            );
+        }
 
-        var body_label = new Gtk.Label(email.get_preview_as_string());
-        body_label.wrap = true;
-        body_label.xalign = 0;
-        body_label.yalign = 0;
-        body_label.selectable = true;
-        body_label.margin_start = 24;
-        body_label.margin_end = 24;
-        body_label.margin_top = 24;
-        body_label.margin_bottom = 24;
-        var body_attrs = new Pango.AttrList();
-        body_attrs.insert(Pango.attr_scale_new(1.05));
-        body_label.attributes = body_attrs;
-        body_scroll.add(body_label);
+        var web_view = new ConversationWebView(this.config);
+        web_view.vexpand = true;
+        web_view.hexpand = true;
+        // Enable remote image loading
+        try {
+            yield web_view.load_remote_resources(null);
+        } catch (GLib.Error err) {
+            debug("Could not enable remote resources: %s", err.message);
+        }
+        web_view.load_html(body_html);
+        this.previous_web_view = web_view;
 
-        container.pack_start(body_scroll, true, true, 0);
+        container.pack_start(web_view, true, true, 0);
         container.show_all();
 
         // Put it in the conversation scroller

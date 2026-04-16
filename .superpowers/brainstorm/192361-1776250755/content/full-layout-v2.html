@@ -1,0 +1,194 @@
+<h2>Full Three-Column Layout — Refined Colors</h2>
+<p class="subtitle">Unified color palette with consistent tones and better visual harmony.</p>
+
+<style>
+  .geary-mock {
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #252536;
+    --bg-tertiary: #2a2a3c;
+    --bg-selected: #32324a;
+    --bg-hover: #2e2e42;
+    --border: #3a3a50;
+    --text-primary: #e0e0ec;
+    --text-secondary: #a0a0b8;
+    --text-muted: #707088;
+    --accent: #7c8ef2;
+    --accent-dim: rgba(124,142,242,0.15);
+    --incoming: #7cacf2;
+    --outgoing: #7cc8a0;
+    --badge-bg: #7c8ef2;
+    --badge-text: #fff;
+    font-family: -apple-system, 'Cantarell', 'Segoe UI', sans-serif;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+  }
+  .geary-mock * { box-sizing: border-box; }
+</style>
+
+<div class="mockup" style="max-width:980px;margin:20px auto">
+  <div class="mockup-header">ChatMail Geary</div>
+  <div class="mockup-body geary-mock" style="display:flex;min-height:440px;padding:0;border-radius:0 0 8px 8px;overflow:hidden">
+
+    <!-- COLUMN 1: Contact List -->
+    <div style="width:224px;border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto;background:var(--bg-secondary)">
+      <!-- Search -->
+      <div style="padding:10px;border-bottom:1px solid var(--border)">
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-muted);font-size:11px;display:flex;align-items:center;gap:6px">
+          <span style="opacity:0.5">&#128269;</span> Search contacts...
+        </div>
+      </div>
+      <!-- Account header -->
+      <div style="padding:8px 12px;font-weight:600;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);background:var(--bg-primary)">me@gmail.com</div>
+      <!-- Selected contact -->
+      <div style="padding:9px 12px;background:var(--bg-selected);display:flex;align-items:center;gap:9px;border-left:3px solid var(--accent)">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">AJ</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:12px;color:var(--text-primary)">Alice Johnson</div>
+          <div style="color:var(--text-muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">alice@example.com</div>
+        </div>
+        <span style="background:var(--badge-bg);color:var(--badge-text);border-radius:9px;padding:1px 7px;font-size:10px;font-weight:600">3</span>
+      </div>
+      <!-- Other contacts -->
+      <div style="padding:9px 12px;display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#5e9e7a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">BS</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-primary)">Bob Smith</div>
+          <div style="color:var(--text-muted);font-size:10px">bob@work.com</div>
+        </div>
+        <span style="background:var(--badge-bg);color:var(--badge-text);border-radius:9px;padding:1px 7px;font-size:10px;font-weight:600">1</span>
+      </div>
+      <div style="padding:9px 12px;display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#c48a6a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">CW</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-primary)">Carol Williams</div>
+          <div style="color:var(--text-muted);font-size:10px">carol@company.org</div>
+        </div>
+      </div>
+      <div style="padding:9px 12px;display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#9a7eb8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">DL</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-primary)">David Lee</div>
+          <div style="color:var(--text-muted);font-size:10px">david@startup.io</div>
+        </div>
+      </div>
+      <div style="padding:9px 12px;display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#5a9aaa;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">EM</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-primary)">Eva Martinez</div>
+          <div style="color:var(--text-muted);font-size:10px">eva@design.co</div>
+        </div>
+      </div>
+      <!-- Second account -->
+      <div style="padding:8px 12px;font-weight:600;color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);border-top:1px solid var(--border);background:var(--bg-primary);margin-top:2px">work@company.com</div>
+      <div style="padding:9px 12px;display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#8a8a6a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px;flex-shrink:0">HR</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-primary)">HR Department</div>
+          <div style="color:var(--text-muted);font-size:10px">hr@company.com</div>
+        </div>
+        <span style="background:var(--badge-bg);color:var(--badge-text);border-radius:9px;padding:1px 7px;font-size:10px;font-weight:600">2</span>
+      </div>
+    </div>
+
+    <!-- COLUMN 2: Email List -->
+    <div style="width:305px;border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto;background:var(--bg-secondary)">
+      <!-- Contact header -->
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;background:var(--bg-primary)">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:10px;flex-shrink:0">AJ</div>
+        <span style="font-weight:600;font-size:13px;color:var(--text-primary)">Alice Johnson</span>
+        <span style="color:var(--text-muted);font-size:11px;margin-left:auto">6 emails</span>
+      </div>
+      <!-- Selected email - incoming -->
+      <div style="padding:10px 14px;background:var(--bg-selected);display:flex;align-items:flex-start;gap:8px;border-left:3px solid var(--accent)">
+        <span style="color:var(--incoming);font-size:15px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:var(--text-primary)">Re: Project timeline</span><span style="color:var(--text-muted);font-size:10px">2h ago</span></div>
+          <div style="color:var(--text-secondary);font-size:11px;margin-top:4px">Thanks for the update, I'll review the...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+      <!-- Outgoing -->
+      <div style="padding:10px 14px;display:flex;align-items:flex-start;gap:8px">
+        <span style="width:16px"></span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:var(--text-primary)">Project timeline</span><span style="color:var(--text-muted);font-size:10px">Yesterday</span></div>
+          <div style="color:var(--text-secondary);font-size:11px;margin-top:4px">Hi Alice, here's the updated timeline for...</div>
+        </div>
+        <span style="color:var(--outgoing);font-size:15px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8593;</span>
+      </div>
+      <!-- Incoming -->
+      <div style="padding:10px 14px;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:var(--incoming);font-size:15px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:var(--text-primary)">Quick question</span><span style="color:var(--text-muted);font-size:10px">Mar 12</span></div>
+          <div style="color:var(--text-secondary);font-size:11px;margin-top:4px">Hey, do you have a minute to discuss the...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+      <!-- Outgoing -->
+      <div style="padding:10px 14px;display:flex;align-items:flex-start;gap:8px">
+        <span style="width:16px"></span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:var(--text-primary)">Meeting notes</span><span style="color:var(--text-muted);font-size:10px">Mar 10</span></div>
+          <div style="color:var(--text-secondary);font-size:11px;margin-top:4px">Here are the notes from today's sync...</div>
+        </div>
+        <span style="color:var(--outgoing);font-size:15px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8593;</span>
+      </div>
+      <!-- Incoming -->
+      <div style="padding:10px 14px;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:var(--incoming);font-size:15px;line-height:1;margin-top:2px;width:16px;text-align:center">&#8595;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:var(--text-primary)">Re: Meeting notes</span><span style="color:var(--text-muted);font-size:10px">Mar 8</span></div>
+          <div style="color:var(--text-secondary);font-size:11px;margin-top:4px">Great summary, I've added a few comments...</div>
+        </div>
+        <span style="width:16px"></span>
+      </div>
+    </div>
+
+    <!-- COLUMN 3: Email Viewer -->
+    <div style="flex:1;overflow-y:auto;background:var(--bg-primary)">
+      <div style="padding:18px 24px;border-bottom:1px solid var(--border)">
+        <h3 style="margin:0 0 10px 0;font-size:16px;color:var(--text-primary);font-weight:600">Re: Project timeline</h3>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:11px">AJ</div>
+          <div>
+            <div style="font-size:13px;color:var(--text-primary)"><strong>Alice Johnson</strong> <span style="color:var(--text-muted)">&lt;alice@example.com&gt;</span></div>
+            <div style="font-size:11px;color:var(--text-muted)">to me &middot; 2 hours ago</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:24px;color:var(--text-secondary);font-size:13px;line-height:1.7">
+        <p style="margin:0 0 14px">Hi,</p>
+        <p style="margin:0 0 14px">Thanks for the update on the project timeline. I've reviewed the changes and everything looks good for Q2.</p>
+        <p style="margin:0 0 14px">A few things I noticed:</p>
+        <ul style="margin:0 0 14px;padding-left:20px">
+          <li style="margin-bottom:4px">The design phase deadline seems tight — can we extend by a week?</li>
+          <li style="margin-bottom:4px">We should schedule a mid-sprint review for April 15th</li>
+          <li style="margin-bottom:4px">Budget allocation for the testing phase needs confirmation</li>
+        </ul>
+        <p style="margin:0 0 14px">Let me know if you want to discuss over a call.</p>
+        <p style="margin:0">Best,<br>Alice</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">&#10003;</div>
+    <div class="content">
+      <h3>Looks good — approved</h3>
+      <p>Unified dark palette, consistent spacing and typography across all three columns.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="revise" onclick="toggleSelect(this)">
+    <div class="letter">&#8634;</div>
+    <div class="content">
+      <h3>Needs more changes</h3>
+      <p>Tell me what to adjust in the terminal.</p>
+    </div>
+  </div>
+</div>

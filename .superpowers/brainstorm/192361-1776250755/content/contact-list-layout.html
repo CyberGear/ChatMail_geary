@@ -1,0 +1,106 @@
+<h2>Contact List (Column 1) — Layout Options</h2>
+<p class="subtitle">How should each contact appear in the sidebar? Contacts grouped under account headers.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Compact — Name + Count</h3>
+      <p>Minimal: just the contact name/email and an unread badge. Like a chat app sidebar.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Contact List</div>
+        <div class="mockup-body" style="font-family:sans-serif;font-size:13px;line-height:1;">
+          <div style="padding:8px 12px;font-weight:bold;color:#888;font-size:11px;text-transform:uppercase;border-bottom:1px solid #333">me@gmail.com</div>
+          <div style="padding:10px 12px;background:#3a3a4a;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #5b9bd5">
+            <span style="font-weight:600">Alice Johnson</span>
+            <span style="background:#5b9bd5;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">3</span>
+          </div>
+          <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <span>Bob Smith</span>
+            <span style="background:#5b9bd5;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">1</span>
+          </div>
+          <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <span>carol@company.org</span>
+            <span></span>
+          </div>
+          <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <span>David Lee</span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Rich — Name + Last Message Preview</h3>
+      <p>Shows contact name, a snippet of the most recent email, and the date. More context at a glance.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Contact List</div>
+        <div class="mockup-body" style="font-family:sans-serif;font-size:13px;line-height:1;">
+          <div style="padding:8px 12px;font-weight:bold;color:#888;font-size:11px;text-transform:uppercase;border-bottom:1px solid #333">me@gmail.com</div>
+          <div style="padding:10px 12px;background:#3a3a4a;border-left:3px solid #5b9bd5">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600">Alice Johnson</span>
+              <span style="color:#888;font-size:11px">2h ago</span>
+            </div>
+            <div style="color:#aaa;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Re: Project timeline update for Q2...</div>
+          </div>
+          <div style="padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600">Bob Smith</span>
+              <span style="color:#888;font-size:11px">Yesterday</span>
+            </div>
+            <div style="color:#aaa;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Thanks for sending the invoice...</div>
+          </div>
+          <div style="padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>carol@company.org</span>
+              <span style="color:#888;font-size:11px">Mar 10</span>
+            </div>
+            <div style="color:#aaa;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Meeting agenda for Wednesday...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Avatar — Icon + Name + Count</h3>
+      <p>Adds a circular initial/avatar next to each name. More visual but takes more space.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Contact List</div>
+        <div class="mockup-body" style="font-family:sans-serif;font-size:13px;line-height:1;">
+          <div style="padding:8px 12px;font-weight:bold;color:#888;font-size:11px;text-transform:uppercase;border-bottom:1px solid #333">me@gmail.com</div>
+          <div style="padding:10px 12px;background:#3a3a4a;display:flex;align-items:center;gap:10px;border-left:3px solid #5b9bd5">
+            <div style="width:32px;height:32px;border-radius:50%;background:#5b9bd5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">AJ</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600">Alice Johnson</div>
+              <div style="color:#888;font-size:11px;margin-top:2px">alice@example.com</div>
+            </div>
+            <span style="background:#5b9bd5;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">3</span>
+          </div>
+          <div style="padding:10px 12px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#6b8e5a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">BS</div>
+            <div style="flex:1;min-width:0">
+              <div>Bob Smith</div>
+              <div style="color:#888;font-size:11px;margin-top:2px">bob@work.com</div>
+            </div>
+            <span style="background:#5b9bd5;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">1</span>
+          </div>
+          <div style="padding:10px 12px;display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#c47a5a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0">C</div>
+            <div style="flex:1;min-width:0">
+              <div>carol@company.org</div>
+              <div style="color:#888;font-size:11px;margin-top:2px">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

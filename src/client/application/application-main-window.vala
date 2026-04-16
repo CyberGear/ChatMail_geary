@@ -2402,8 +2402,8 @@ public class Application.MainWindow :
             break;
         }
         if (account != null) {
-            this.conversation_viewer.load_single_email(
-                email, account.information
+            this.conversation_viewer.load_single_email.begin(
+                email, account
             );
         }
         // Navigate to viewer pane on mobile
