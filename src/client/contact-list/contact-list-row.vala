@@ -51,10 +51,14 @@ internal class ContactList.Row : Gtk.ListBoxRow {
         this.name_label.xalign = 0;
         this.name_label.ellipsize = Pango.EllipsizeMode.END;
         this.name_label.get_style_context().add_class("contact-name");
-        // Bold via markup
-        this.name_label.set_markup(
-            "<b>%s</b>".printf(GLib.Markup.escape_text(contact.display_name))
-        );
+        // Bold only if there are unread emails
+        if (contact.unread_count > 0) {
+            this.name_label.set_markup(
+                "<b>%s</b>".printf(GLib.Markup.escape_text(contact.display_name))
+            );
+        } else {
+            this.name_label.set_text(contact.display_name);
+        }
         vbox.pack_start(this.name_label, false, false, 0);
 
         this.email_label = new Gtk.Label(contact.email);
@@ -62,9 +66,6 @@ internal class ContactList.Row : Gtk.ListBoxRow {
         this.email_label.ellipsize = Pango.EllipsizeMode.END;
         this.email_label.get_style_context().add_class("contact-email");
         this.email_label.get_style_context().add_class("dim-label");
-        var attr_list = new Pango.AttrList();
-        attr_list.insert(Pango.attr_scale_new(Pango.Scale.SMALL));
-        this.email_label.attributes = attr_list;
         vbox.pack_start(this.email_label, false, false, 0);
 
         hbox.pack_start(vbox, true, true, 0);

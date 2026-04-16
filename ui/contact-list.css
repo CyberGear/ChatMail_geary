@@ -29,18 +29,21 @@
 }
 
 .contact-name {
-  font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .contact-email {
-  font-size: 10px;
+  font-size: 11px;
   opacity: 0.6;
 }
 
-.contact-badge {
-  background-color: @theme_selected_bg_color;
-  color: white;
+.contact-badge,
+row:selected .contact-badge,
+row.contact-list-row:selected .contact-badge,
+.contact-list-row:selected .contact-badge {
+  background-image: none;
+  background-color: shade(@theme_bg_color, 0.8);
+  color: @theme_selected_bg_color;
   border-radius: 9px;
   padding: 1px 7px;
   font-size: 10px;
