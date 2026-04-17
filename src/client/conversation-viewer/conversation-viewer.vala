@@ -439,6 +439,12 @@ public class ConversationViewer : Gtk.Stack, Geary.BaseInterface {
         var web_view = new ConversationWebView(this.config);
         web_view.vexpand = true;
         web_view.hexpand = true;
+        web_view.link_activated.connect((uri) => {
+            var main = get_toplevel() as Application.MainWindow;
+            if (main != null) {
+                main.application.show_uri.begin(uri);
+            }
+        });
         // Enable remote image loading
         try {
             yield web_view.load_remote_resources(null);

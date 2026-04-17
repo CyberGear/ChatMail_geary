@@ -117,112 +117,164 @@ internal class ContactEmailList.View : Gtk.Box {
     // -------------------------------------------------------------------
 
     /**
-     * Fetches emails from Inbox and Sent that match the given contact,
-     * determines direction, sorts newest-first, and populates the list.
+     * Fetches emails from Inbox and Sent that match the given contact
+     * by querying the local SQLite DB directly (same source as column 1),
+     * then batch-fetches full Email objects via account.list_local_email_async.
      */
     internal async void load_emails(ContactList.Contact contact,
                                     Geary.Account account,
                                     GLib.Cancellable? cancellable) {
-        var all_emails = new Gee.ArrayList<EmailWithDirection>();
+        GLib.File? data_dir = account.information.data_dir;
+        if (data_dir == null) return;
 
-        // Collect emails from Inbox and Sent
-        Geary.Folder? inbox = account.get_special_folder(Geary.Folder.SpecialUse.INBOX);
-        Geary.Folder? sent = account.get_special_folder(Geary.Folder.SpecialUse.SENT);
+        string db_path = data_dir.get_child("geary.db").get_path();
+        string contact_email = contact.rfc822_address.address.down();
 
-        if (inbox != null) {
-            yield collect_from_folder(
-                inbox, contact, account.information, false,
-                all_emails, cancellable
+        // Find folder IDs for Inbox and Sent
+        int inbox_id = -1;
+        int sent_id = -1;
+        var msg_ids = new Gee.ArrayList<int64?>();
+        var direction_map = new Gee.HashMap<int64?, bool>();
+
+        try {
+            Sqlite.Database db;
+            int rc = Sqlite.Database.open_v2(db_path, out db, Sqlite.OPEN_READONLY);
+            if (rc != Sqlite.OK) return;
+
+            Sqlite.Statement folder_stmt;
+            rc = db.prepare_v2(
+                "SELECT id, name, attributes FROM FolderTable", -1, out folder_stmt
             );
-        }
+            if (rc == Sqlite.OK) {
+                while (folder_stmt.step() == Sqlite.ROW) {
+                    string name = folder_stmt.column_text(1) ?? "";
+                    string attrs = folder_stmt.column_text(2) ?? "";
+                    if (name == "INBOX") {
+                        inbox_id = folder_stmt.column_int(0);
+                    } else if ("\\Sent" in attrs) {
+                        sent_id = folder_stmt.column_int(0);
+                    }
+                }
+            }
 
-        if (sent != null) {
-            yield collect_from_folder(
-                sent, contact, account.information, true,
-                all_emails, cancellable
-            );
-        }
+            if (inbox_id < 0 && sent_id < 0) return;
 
-        if (cancellable != null && cancellable.is_cancelled()) {
+            string like_pattern = "%%<%s>%%".printf(contact_email);
+
+            // Inbox: match by from_field
+            if (inbox_id >= 0) {
+                Sqlite.Statement inbox_stmt;
+                rc = db.prepare_v2("""
+                    SELECT m.id FROM MessageTable m
+                    JOIN MessageLocationTable ml ON ml.message_id = m.id
+                    WHERE ml.folder_id = ?1
+                      AND LOWER(m.from_field) LIKE ?2
+                      AND m.date_time_t > 0
+                """, -1, out inbox_stmt);
+                if (rc == Sqlite.OK) {
+                    inbox_stmt.bind_int(1, inbox_id);
+                    inbox_stmt.bind_text(2, like_pattern);
+                    while (inbox_stmt.step() == Sqlite.ROW) {
+                        int64 mid = inbox_stmt.column_int64(0);
+                        msg_ids.add(mid);
+                        direction_map.set(mid, false);
+                    }
+                }
+            }
+
+            // Sent: match by to_field
+            if (sent_id >= 0) {
+                Sqlite.Statement sent_stmt;
+                rc = db.prepare_v2("""
+                    SELECT m.id FROM MessageTable m
+                    JOIN MessageLocationTable ml ON ml.message_id = m.id
+                    WHERE ml.folder_id = ?1
+                      AND LOWER(m.to_field) LIKE ?2
+                      AND m.date_time_t > 0
+                """, -1, out sent_stmt);
+                if (rc == Sqlite.OK) {
+                    sent_stmt.bind_int(1, sent_id);
+                    sent_stmt.bind_text(2, like_pattern);
+                    while (sent_stmt.step() == Sqlite.ROW) {
+                        int64 mid = sent_stmt.column_int64(0);
+                        msg_ids.add(mid);
+                        direction_map.set(mid, true);
+                    }
+                }
+            }
+        } catch (GLib.Error err) {
+            debug("ContactEmailList: SQLite query failed: %s", err.message);
             return;
         }
 
-        // Sort newest first
-        all_emails.sort((a, b) => {
-            return compare_email_date_desc(a.email, b.email);
+        if (msg_ids.size == 0 || (cancellable != null && cancellable.is_cancelled())) {
+            return;
+        }
+
+        // Convert SQLite message_ids to Geary EmailIdentifiers via variant
+        var email_ids = new Gee.ArrayList<Geary.EmailIdentifier>();
+        foreach (int64? mid in msg_ids) {
+            try {
+                // ImapDB.EmailIdentifier variant format: (y(xx)) = ('i', (message_id, uid))
+                // uid = -1 means unknown UID
+                var variant = new GLib.Variant.tuple(new GLib.Variant[] {
+                    new GLib.Variant.byte('i'),
+                    new GLib.Variant.tuple(new GLib.Variant[] {
+                        new GLib.Variant.int64(mid),
+                        new GLib.Variant.int64(-1)
+                    })
+                });
+                email_ids.add(account.to_email_identifier(variant));
+            } catch (GLib.Error err) {
+                debug("Failed to create email id for message %lld: %s",
+                      mid, err.message);
+            }
+        }
+
+        if (email_ids.size == 0) return;
+
+        // Batch-fetch all Email objects from local DB
+        Gee.List<Geary.Email>? emails = null;
+        try {
+            emails = yield account.list_local_email_async(
+                email_ids, REQUIRED_FIELDS, cancellable
+            );
+        } catch (GLib.Error err) {
+            debug("ContactEmailList: failed to fetch emails: %s", err.message);
+            return;
+        }
+
+        if (emails == null || (cancellable != null && cancellable.is_cancelled())) {
+            return;
+        }
+
+        // Build direction-aware list and sort
+        var all_emails = new Gee.ArrayList<EmailWithDirection>();
+        foreach (Geary.Email email in emails) {
+            // Recover the message_id from the variant to look up direction
+            int64 mid = email.id.to_variant().get_child_value(1)
+                            .get_child_value(0).get_int64();
+            bool outgoing = direction_map.has_key(mid)
+                ? direction_map.get(mid) : false;
+            all_emails.add(new EmailWithDirection(email, outgoing));
+        }
+
+        all_emails.sort((a, b_item) => {
+            return compare_email_date_desc(a.email, b_item.email);
         });
 
         // Populate rows
         int count = 0;
         foreach (var item in all_emails) {
-            if (cancellable != null && cancellable.is_cancelled()) {
-                return;
-            }
+            if (cancellable != null && cancellable.is_cancelled()) return;
             var row = new ContactEmailList.Row(item.email, item.outgoing);
             this.list_box.add(row);
             count++;
         }
 
-        // Update the header count
         this.email_count_label.set_text(
             ngettext("%d email", "%d emails", (ulong) count).printf(count)
         );
-    }
-
-    /**
-     * Opens a folder, lists emails, filters by contact address match,
-     * and appends results to the accumulator.
-     */
-    private async void collect_from_folder(
-        Geary.Folder folder,
-        ContactList.Contact contact,
-        Geary.AccountInformation account_info,
-        bool folder_is_sent,
-        Gee.List<EmailWithDirection> accumulator,
-        GLib.Cancellable? cancellable
-    ) {
-        try {
-            yield folder.open_async(Geary.Folder.OpenFlags.NONE, cancellable);
-
-            Gee.List<Geary.Email>? emails =
-                yield folder.list_email_by_id_async(
-                    null,
-                    1000,
-                    REQUIRED_FIELDS,
-                    Geary.Folder.ListFlags.LOCAL_ONLY,
-                    cancellable
-                );
-
-            if (emails != null) {
-                foreach (Geary.Email email in emails) {
-                    if (cancellable != null && cancellable.is_cancelled()) {
-                        break;
-                    }
-
-                    // For Inbox: only match if the contact is the sender
-                    // For Sent: only match if the contact is a recipient
-                    bool matches;
-                    if (folder_is_sent) {
-                        matches = address_list_contains(email.to, contact.rfc822_address) ||
-                                  address_list_contains(email.cc, contact.rfc822_address) ||
-                                  address_list_contains(email.bcc, contact.rfc822_address);
-                    } else {
-                        matches = address_list_contains(email.from, contact.rfc822_address);
-                    }
-
-                    if (matches) {
-                        accumulator.add(
-                            new EmailWithDirection(email, folder_is_sent)
-                        );
-                    }
-                }
-            }
-
-            yield folder.close_async(cancellable);
-        } catch (GLib.Error err) {
-            debug("Failed to load emails from %s: %s",
-                  folder.path.to_string(), err.message);
-        }
     }
 
     // -------------------------------------------------------------------

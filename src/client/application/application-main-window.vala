@@ -1336,11 +1336,11 @@ public class Application.MainWindow :
         this.folder_list_scrolled.add(this.contact_list);
 
         // Conversation list (kept for compatibility but not shown in UI)
+        // Only connect mark_conversations — do NOT connect conversations_selected
+        // or conversation_activated, as they trigger the old load_conversation path
+        // which conflicts with the contact-centric single-email viewer.
         this.conversation_list_view = new ConversationList.View(this.application.config);
         this.conversation_list_view.mark_conversations.connect(on_mark_conversations);
-        this.conversation_list_view.conversations_selected.connect(on_conversations_selected);
-        this.conversation_list_view.conversation_activated.connect(on_conversation_activated);
-        this.conversation_list_view.visible_conversations.notify.connect(on_visible_conversations_changed);
 
         // Contact email list (replaces conversation list in column 2)
         this.contact_email_list = new ContactEmailList.View();

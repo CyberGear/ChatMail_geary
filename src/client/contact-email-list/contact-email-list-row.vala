@@ -9,12 +9,18 @@
  * A list box row displaying a single email in the contact email list.
  *
  * Shows the email subject, a short preview snippet, the date, and a
- * directional arrow indicating whether the message was incoming or
- * outgoing relative to the account owner.
+ * directional chevron band indicating whether the message was incoming
+ * or outgoing relative to the account owner.
+ *
+ * Incoming: blue downward chevrons on the left edge.
+ * Outgoing: green upward chevrons on the right edge.
  *
  * Subject is bold when the email is unread; normal weight when read.
  */
 internal class ContactEmailList.Row : Gtk.ListBoxRow {
+
+    private const int CHEVRON_WIDTH = 40;
+    private const int NUM_CHEVRONS = 4;
 
     /** The email represented by this row. */
     public Geary.Email email { get; private set; }
@@ -22,11 +28,9 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
     /** Whether this email was sent by the account owner. */
     public bool is_outgoing { get; private set; }
 
-    private Gtk.Label left_arrow_label;
     private Gtk.Label subject_label;
     private Gtk.Label preview_label;
     private Gtk.Label date_label;
-    private Gtk.Label right_arrow_label;
 
     internal Row(Geary.Email email, bool is_outgoing) {
         this.email = email;
@@ -54,26 +58,30 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
     }
 
     private void build_ui() {
-        var hbox = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
-        hbox.margin_top = 6;
-        hbox.margin_bottom = 6;
-        hbox.margin_start = 8;
-        hbox.margin_end = 8;
+        var overlay_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
 
-        // Left arrow column -- fixed width for alignment
-        this.left_arrow_label = new Gtk.Label(null);
-        this.left_arrow_label.width_request = 16;
-        this.left_arrow_label.xalign = 0.5f;
-        this.left_arrow_label.valign = Gtk.Align.CENTER;
-        hbox.pack_start(this.left_arrow_label, false, false, 0);
+        // Chevron band on the left (incoming) or right (outgoing)
+        var chevron_area = new Gtk.DrawingArea();
+        chevron_area.set_size_request(CHEVRON_WIDTH, -1);
+        chevron_area.vexpand = true;
+        chevron_area.draw.connect(on_draw_chevrons);
+
+        // Content area with padding
+        var content = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+        content.margin_top = 12;
+        content.margin_bottom = 12;
+        content.margin_start = 10;
+        content.margin_end = 10;
+        content.hexpand = true;
 
         // Centre content: subject + preview
         var centre_vbox = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
+        centre_vbox.hexpand = true;
 
         this.subject_label = new Gtk.Label(null);
         this.subject_label.xalign = 0;
         this.subject_label.ellipsize = Pango.EllipsizeMode.END;
-        this.subject_label.max_width_chars = 1;  // let container decide
+        this.subject_label.max_width_chars = 1;
         this.subject_label.hexpand = true;
         centre_vbox.pack_start(this.subject_label, false, false, 0);
 
@@ -86,25 +94,26 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
         this.preview_label.get_style_context().add_class("dim-label");
         centre_vbox.pack_start(this.preview_label, false, false, 0);
 
-        hbox.pack_start(centre_vbox, true, true, 0);
+        content.pack_start(centre_vbox, true, true, 0);
 
-        // Right side: date + arrow stacked vertically
-        var right_vbox = new Gtk.Box(Gtk.Orientation.VERTICAL, 2);
-        right_vbox.valign = Gtk.Align.CENTER;
-
+        // Date on the right
         this.date_label = new Gtk.Label(null);
         this.date_label.xalign = 1.0f;
+        this.date_label.valign = Gtk.Align.START;
         this.date_label.get_style_context().add_class("dim-label");
-        right_vbox.pack_start(this.date_label, false, false, 0);
+        content.pack_end(this.date_label, false, false, 0);
 
-        this.right_arrow_label = new Gtk.Label(null);
-        this.right_arrow_label.width_request = 16;
-        this.right_arrow_label.xalign = 1.0f;
-        right_vbox.pack_start(this.right_arrow_label, false, false, 0);
+        if (this.is_outgoing) {
+            overlay_box.pack_start(content, true, true, 0);
+            overlay_box.pack_end(chevron_area, false, false, 0);
+            get_style_context().add_class("direction-outgoing");
+        } else {
+            overlay_box.pack_start(chevron_area, false, false, 0);
+            overlay_box.pack_start(content, true, true, 0);
+            get_style_context().add_class("direction-incoming");
+        }
 
-        hbox.pack_end(right_vbox, false, false, 0);
-
-        this.add(hbox);
+        this.add(overlay_box);
         this.show_all();
     }
 
@@ -145,20 +154,64 @@ internal class ContactEmailList.Row : Gtk.ListBoxRow {
         this.date_label.set_markup(
             "<small>%s</small>".printf(GLib.Markup.escape_text(date_text))
         );
+    }
 
-        // Direction arrows
+    private bool on_draw_chevrons(Gtk.Widget widget, Cairo.Context cr) {
+        int width = widget.get_allocated_width();
+        int height = widget.get_allocated_height();
+
+        // Chevron colour: blue for incoming, green for outgoing
+        double r, g, b;
         if (this.is_outgoing) {
-            this.left_arrow_label.set_text("");
-            this.right_arrow_label.set_markup(
-                "<span foreground=\"#7cc8a0\">\xe2\x86\x91</span>"
-            );
-            get_style_context().add_class("direction-outgoing");
+            // Green #7cc8a0
+            r = 0.486; g = 0.784; b = 0.627;
         } else {
-            this.left_arrow_label.set_markup(
-                "<span foreground=\"#7cacf2\">\xe2\x86\x93</span>"
-            );
-            this.right_arrow_label.set_text("");
-            get_style_context().add_class("direction-incoming");
+            // Blue #7cacf2
+            r = 0.486; g = 0.675; b = 0.949;
         }
+
+        // Draw stacked chevrons pointing down (incoming) or up (outgoing)
+        double gap = 2.0;
+        double usable = height - (NUM_CHEVRONS - 1) * gap;
+        double chevron_h = usable / NUM_CHEVRONS;
+        double cx = width / 2.0;
+        double indent = width * 0.12;
+
+        for (int i = 0; i < NUM_CHEVRONS; i++) {
+            double top = i * (chevron_h + gap);
+            double bot = top + chevron_h;
+            double peak = chevron_h * 0.50;
+
+            // Fade: strongest at the flow direction
+            double alpha;
+            if (this.is_outgoing) {
+                alpha = 0.35 + 0.65 * (1.0 - (double) i / NUM_CHEVRONS);
+            } else {
+                alpha = 0.35 + 0.65 * ((double) i / NUM_CHEVRONS);
+            }
+            cr.set_source_rgba(r, g, b, alpha);
+
+            if (this.is_outgoing) {
+                // Upward-pointing chevron
+                cr.move_to(indent, bot);
+                cr.line_to(cx, bot - peak);
+                cr.line_to(width - indent, bot);
+                cr.line_to(width - indent, top + peak);
+                cr.line_to(cx, top);
+                cr.line_to(indent, top + peak);
+            } else {
+                // Downward-pointing chevron
+                cr.move_to(indent, top);
+                cr.line_to(cx, top + peak);
+                cr.line_to(width - indent, top);
+                cr.line_to(width - indent, bot - peak);
+                cr.line_to(cx, bot);
+                cr.line_to(indent, bot - peak);
+            }
+            cr.close_path();
+            cr.fill();
+        }
+
+        return true;
     }
 }
