@@ -2147,16 +2147,20 @@ public class Application.MainWindow :
     [GtkCallback]
     private bool on_delete_event() {
         if (close_composer(true, false)) {
-            this.sensitive = false;
-            this.select_folder.begin(
-                null,
-                false,
-                true,
-                (obj, res) => {
-                    this.select_folder.end(res);
-                    destroy();
-                }
-            );
+            if (this.application.is_background_service) {
+                hide();
+            } else {
+                this.sensitive = false;
+                this.select_folder.begin(
+                    null,
+                    false,
+                    true,
+                    (obj, res) => {
+                        this.select_folder.end(res);
+                        destroy();
+                    }
+                );
+            }
         }
         return Gdk.EVENT_STOP;
     }

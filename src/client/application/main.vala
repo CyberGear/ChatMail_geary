@@ -5,6 +5,13 @@
  */
 
 int main(string[] args) {
+    // Disable WebKit's bubblewrap sandbox when it cannot use user
+    // namespaces (e.g. unprivileged containers, hardened kernels).
+    // This must be set before any WebKit class is instantiated.
+    Environment.set_variable(
+        "WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS", "1", false
+    );
+
     // Init logging right up front so as to capture as many log
     // messages as possible
     Geary.Logging.init();

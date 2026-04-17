@@ -156,6 +156,7 @@ endif
 # Optional dependencies
 appstreamcli = find_program('appstreamcli', required: false)
 desktop_file_validate = find_program('desktop-file-validate', required: false)
+ayatana_appindicator = dependency('ayatana-appindicator3-0.1', required: false)
 libmessagingmenu_dep = dependency('messaging-menu', version: '>= 12.10', required: false)
 
 #

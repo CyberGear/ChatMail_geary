@@ -74,7 +74,7 @@
     </key>
 
     <key name="run-in-background" type="b">
-        <default>false</default>
+        <default>true</default>
         <summary>Run application in background on logon and when closed</summary>
         <description>True to run application in background.</description>
     </key>

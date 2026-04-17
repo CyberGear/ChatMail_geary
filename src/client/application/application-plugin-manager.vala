@@ -20,6 +20,7 @@ public class Application.PluginManager : GLib.Object {
         "folder-highlight",
         "notification-badge",
         "special-folders",
+        "status-icon",
     };
 
 
