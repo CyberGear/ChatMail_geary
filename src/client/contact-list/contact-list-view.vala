@@ -223,35 +223,52 @@ internal class ContactList.View : Gtk.Box {
 
             if (inbox_id < 0 && sent_id < 0) return;
 
-            // Query contacts: from inbox senders + sent recipients
-            // Uses the same matching as column 2: extract email between < >
-            // Also tracks unread count (inbox only, no \Seen flag)
+            // Query contacts: from inbox senders + sent recipients.
+            // Handles two RFC822 address formats in from_field/to_field:
+            //   1. "Display Name <email@host>"  -> extract between < and >
+            //   2. "email@host"                 -> the field is the address
+            // Multi-recipient bare lists ("a@x, b@y") are skipped; mixed
+            // formats are grouped by the final extracted email.
             string sql = """
                 WITH inbox_senders AS (
-                    SELECT LOWER(SUBSTR(m.from_field,
-                                INSTR(m.from_field, '<') + 1,
-                                INSTR(m.from_field, '>') - INSTR(m.from_field, '<') - 1
-                           )) as email,
+                    SELECT LOWER(
+                             CASE WHEN INSTR(m.from_field, '<') > 0
+                                       AND INSTR(m.from_field, '>') > INSTR(m.from_field, '<')
+                                  THEN SUBSTR(m.from_field,
+                                              INSTR(m.from_field, '<') + 1,
+                                              INSTR(m.from_field, '>') - INSTR(m.from_field, '<') - 1)
+                                  ELSE TRIM(m.from_field)
+                             END
+                           ) as email,
                            m.date_time_t,
                            CASE WHEN (m.flags IS NULL OR m.flags = '' OR m.flags NOT LIKE '%%\Seen%%')
                                 THEN 1 ELSE 0 END as is_unread
                     FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?1
-                      AND m.from_field LIKE '%%<%%>%%'
+                      AND m.from_field IS NOT NULL
+                      AND m.from_field LIKE '%%@%%'
+                      AND (m.from_field LIKE '%%<%%>%%' OR m.from_field NOT LIKE '%%,%%')
                       AND m.date_time_t > 0
                 ),
                 sent_recipients AS (
-                    SELECT LOWER(SUBSTR(m.to_field,
-                                INSTR(m.to_field, '<') + 1,
-                                INSTR(m.to_field, '>') - INSTR(m.to_field, '<') - 1
-                           )) as email,
+                    SELECT LOWER(
+                             CASE WHEN INSTR(m.to_field, '<') > 0
+                                       AND INSTR(m.to_field, '>') > INSTR(m.to_field, '<')
+                                  THEN SUBSTR(m.to_field,
+                                              INSTR(m.to_field, '<') + 1,
+                                              INSTR(m.to_field, '>') - INSTR(m.to_field, '<') - 1)
+                                  ELSE TRIM(m.to_field)
+                             END
+                           ) as email,
                            m.date_time_t,
                            0 as is_unread
                     FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?2
-                      AND m.to_field LIKE '%%<%%>%%'
+                      AND m.to_field IS NOT NULL
+                      AND m.to_field LIKE '%%@%%'
+                      AND (m.to_field LIKE '%%<%%>%%' OR m.to_field NOT LIKE '%%,%%')
                       AND m.date_time_t > 0
                 ),
                 all_emails AS (

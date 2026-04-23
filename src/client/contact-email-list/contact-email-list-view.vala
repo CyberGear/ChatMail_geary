@@ -134,7 +134,12 @@ internal class ContactEmailList.View : Gtk.Box {
         int inbox_id = -1;
         int sent_id = -1;
         var msg_ids = new Gee.ArrayList<int64?>();
-        var direction_map = new Gee.HashMap<int64?, bool>();
+        // HashMap<int64?, …> needs explicit value-based hash/equal — the
+        // default compares boxed references, so lookups never match.
+        var direction_map = new Gee.HashMap<int64?, bool>(
+            (k) => GLib.int64_hash(k),
+            (a, b) => GLib.int64_equal(a, b)
+        );
 
         try {
             Sqlite.Database db;
@@ -159,21 +164,21 @@ internal class ContactEmailList.View : Gtk.Box {
 
             if (inbox_id < 0 && sent_id < 0) return;
 
-            string like_pattern = "%%<%s>%%".printf(contact_email);
-
-            // Inbox: match by from_field
+            // INSTR catches both "<email>" and bare "email" formats.
+            // A post-fetch check with email_matches_contact rejects
+            // substring false positives.
             if (inbox_id >= 0) {
                 Sqlite.Statement inbox_stmt;
                 rc = db.prepare_v2("""
                     SELECT m.id FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?1
-                      AND LOWER(m.from_field) LIKE ?2
+                      AND INSTR(LOWER(m.from_field), ?2) > 0
                       AND m.date_time_t > 0
                 """, -1, out inbox_stmt);
                 if (rc == Sqlite.OK) {
                     inbox_stmt.bind_int(1, inbox_id);
-                    inbox_stmt.bind_text(2, like_pattern);
+                    inbox_stmt.bind_text(2, contact_email);
                     while (inbox_stmt.step() == Sqlite.ROW) {
                         int64 mid = inbox_stmt.column_int64(0);
                         msg_ids.add(mid);
@@ -182,19 +187,20 @@ internal class ContactEmailList.View : Gtk.Box {
                 }
             }
 
-            // Sent: match by to_field
             if (sent_id >= 0) {
                 Sqlite.Statement sent_stmt;
                 rc = db.prepare_v2("""
                     SELECT m.id FROM MessageTable m
                     JOIN MessageLocationTable ml ON ml.message_id = m.id
                     WHERE ml.folder_id = ?1
-                      AND LOWER(m.to_field) LIKE ?2
+                      AND (INSTR(LOWER(m.to_field), ?2) > 0
+                           OR INSTR(LOWER(m.cc), ?2) > 0
+                           OR INSTR(LOWER(m.bcc), ?2) > 0)
                       AND m.date_time_t > 0
                 """, -1, out sent_stmt);
                 if (rc == Sqlite.OK) {
                     sent_stmt.bind_int(1, sent_id);
-                    sent_stmt.bind_text(2, like_pattern);
+                    sent_stmt.bind_text(2, contact_email);
                     while (sent_stmt.step() == Sqlite.ROW) {
                         int64 mid = sent_stmt.column_int64(0);
                         msg_ids.add(mid);
@@ -251,6 +257,7 @@ internal class ContactEmailList.View : Gtk.Box {
         // Build direction-aware list and sort
         var all_emails = new Gee.ArrayList<EmailWithDirection>();
         foreach (Geary.Email email in emails) {
+            if (!email_matches_contact(email, contact)) continue;
             // Recover the message_id from the variant to look up direction
             int64 mid = email.id.to_variant().get_child_value(1)
                             .get_child_value(0).get_int64();
